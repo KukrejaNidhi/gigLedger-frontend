@@ -3,20 +3,21 @@ import React from 'react';
 /**
  * Net Safe-to-Spend & Multi-Segment Liquidity Buffer Card
  * Features:
- * - Large tabular numerals for Net Safe-to-Spend
+ * - Large tabular numerals for Net Safe-to-Spend in Rupees (₹)
  * - Multi-color segmented progress bar with Sky Blue, Amber, and Coral
- * - Clean legend dots (no emojis)
+ * - Clean legend dots with subtle card shadows (shadow-sm hover:shadow-md)
+ * - 100% zero emojis
  */
 export const LiquidityBufferCard = ({
-  safeAmount = 3730.0,
+  safeAmount = 37300.0,
   safePercent = 65,
   taxPercent = 23,
   expensePercent = 12,
-  currency = '$',
+  currency = '₹',
   className = '',
 }) => {
   return (
-    <div className={`w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200 dark:border-[#30363D] p-5 shadow-sm space-y-4 select-none ${className}`}>
+    <div className={`w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-5 shadow-sm hover:shadow-md transition-all space-y-4 select-none ${className}`}>
       
       {/* 1. TOP HEADER ROW */}
       <div className="flex items-start justify-between">
@@ -26,7 +27,7 @@ export const LiquidityBufferCard = ({
             NET SAFE-TO-SPEND
           </span>
           <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
-            {currency}{safeAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {currency}{safeAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
 
@@ -35,29 +36,29 @@ export const LiquidityBufferCard = ({
           <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">
             LIQUIDITY BUFFER
           </span>
-          <span className="text-sm font-extrabold text-sky-600 dark:text-sky-400 font-mono">
+          <span className="text-xs sm:text-sm font-extrabold text-sky-600 dark:text-sky-400 font-mono">
             {safePercent}% Safe
           </span>
         </div>
       </div>
 
       {/* 2. MULTI-COLOR SEGMENTED PROGRESS BAR */}
-      <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 flex overflow-hidden p-0.5 gap-0.5">
+      <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 flex overflow-hidden p-0.5 gap-0.5 border border-slate-200/50 dark:border-slate-700/50">
         {/* Segment 1: Safe Cash (Sky Blue) */}
         <div
-          className="h-full rounded-l-full bg-sky-400 dark:bg-sky-500 shadow-sm transition-all duration-500"
+          className="h-full rounded-l-full bg-sky-400 dark:bg-sky-500 shadow-xs transition-all duration-500"
           style={{ width: `${safePercent}%` }}
         ></div>
 
         {/* Segment 2: Tax Vault (Warm Amber) */}
         <div
-          className="h-full bg-amber-400 dark:bg-amber-500 shadow-sm transition-all duration-500"
+          className="h-full bg-amber-400 dark:bg-amber-500 shadow-xs transition-all duration-500"
           style={{ width: `${taxPercent}%` }}
         ></div>
 
         {/* Segment 3: Expenses (Coral Rose) */}
         <div
-          className="h-full rounded-r-full bg-rose-500 dark:bg-rose-500 shadow-sm transition-all duration-500"
+          className="h-full rounded-r-full bg-rose-500 dark:bg-rose-500 shadow-xs transition-all duration-500"
           style={{ width: `${expensePercent}%` }}
         ></div>
       </div>
@@ -67,7 +68,7 @@ export const LiquidityBufferCard = ({
         {/* Safe Legend */}
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-sky-400"></span>
-          <span>{safePercent}% Safe</span>
+          <span>{safePercent}% Safe Cash</span>
         </div>
 
         {/* Tax Vault Legend */}
@@ -79,7 +80,7 @@ export const LiquidityBufferCard = ({
         {/* Expenses Legend */}
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-          <span>{expensePercent}% Expenses</span>
+          <span>{expensePercent}% Spent</span>
         </div>
       </div>
 
