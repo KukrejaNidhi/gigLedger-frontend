@@ -10,3 +10,4 @@ export * from './transactions/Transactions.jsx';
 export * from './scanner/Scanner.jsx';
 export * from './primitives/Primitives.jsx';
 export * from './auth/index.js';
+export * from './home/index.js';
