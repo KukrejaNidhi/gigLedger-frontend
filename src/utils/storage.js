@@ -1,5 +1,5 @@
 /**
- * GitLedgers Storage & Cookie Utility
+ * GigLedger Storage & Cookie Utility
  * Manages persistent user sessions, tokens, remembered emails, and theme preferences.
  */
 
@@ -39,10 +39,10 @@ export function deleteCookie(name) {
   }
 }
 
-const AUTH_USER_KEY = 'gitledgers_auth_user';
-const AUTH_TOKEN_KEY = 'gitledgers_auth_token';
-const REMEMBERED_EMAIL_KEY = 'gitledgers_remembered_email';
-const THEME_KEY = 'gitledgers_theme';
+const AUTH_USER_KEY = 'gigledger_auth_user';
+const AUTH_TOKEN_KEY = 'gigledger_auth_token';
+const REMEMBERED_EMAIL_KEY = 'gigledger_remembered_email';
+const THEME_KEY = 'gigledger_theme';
 
 export const storage = {
   // Authentication Session
@@ -62,7 +62,15 @@ export const storage = {
     return null;
   },
 
-  setAuthSession(user, token = `gl_tok_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`) {
+  getAuthToken() {
+    try {
+      return localStorage.getItem(AUTH_TOKEN_KEY) || getCookie(AUTH_TOKEN_KEY) || null;
+    } catch {
+      return null;
+    }
+  },
+
+  setAuthSession(user, token) {
     try {
       const userStr = JSON.stringify(user);
       localStorage.setItem(AUTH_USER_KEY, userStr);
@@ -114,7 +122,7 @@ export const storage = {
       const val = localStorage.getItem(THEME_KEY);
       if (val !== null) return val === 'dark';
     } catch {}
-    // Default to false (light) or system preference
+    // Default to false (light)
     return false;
   },
 
