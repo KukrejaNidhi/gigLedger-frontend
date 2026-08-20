@@ -7,10 +7,7 @@ import { authApi } from '../../services/authApi.js';
 
 /**
  * GigLedger Registration Page
- * Fully integrated with backend passwordless email-OTP endpoints:
- * - POST /api/auth/register -> returns pendingSessionId
- * - POST /api/auth/register/verify -> verifies OTP code and returns token + user
- * - POST /api/auth/resend-otp -> resends OTP code
+ * Mobile-First, fully responsive on all screen sizes (iPhone 12 Pro, Android, iPad, Desktop)
  */
 export const RegisterPage = ({
   onRegisterSuccess,
@@ -149,7 +146,6 @@ export const RegisterPage = ({
         };
       }
 
-      // Persist session token and user details
       storage.setAuthSession(user, token);
       storage.setRememberedEmail(formData.email.trim());
 
@@ -203,10 +199,10 @@ export const RegisterPage = ({
   };
 
   return (
-    <div className={`w-full max-w-sm sm:max-w-md mx-auto min-h-screen bg-[#F8FAFC] dark:bg-[#0D1117] text-slate-800 dark:text-slate-100 flex flex-col justify-between p-6 sm:p-8 select-none transition-colors ${className}`}>
+    <div className={`w-full min-h-screen flex flex-col justify-between px-6 py-8 sm:px-8 bg-white dark:bg-[#0D1117] text-slate-900 dark:text-slate-100 select-none transition-colors ${className}`}>
       
-      {/* TOP HEADER: BACK ARROW & CENTERED LOGO */}
-      <div className="pt-8 pb-4 relative flex items-center justify-center">
+      {/* 1. TOP HEADER: BACK ARROW & CENTERED LOGO */}
+      <div className="pt-6 sm:pt-10 pb-4 relative flex items-center justify-center w-full">
         <button
           type="button"
           onClick={step === 2 ? () => {
@@ -214,7 +210,7 @@ export const RegisterPage = ({
             setPendingSessionId('');
             setOtpError('');
           } : onNavigateToLogin}
-          className="absolute left-0 w-9 h-9 rounded-xl bg-white dark:bg-[#161B22] border border-[#E2E8F0] dark:border-[#30363D] flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm hover:border-sky-500 dark:hover:border-sky-400 transition"
+          className="absolute left-0 w-10 h-10 rounded-2xl bg-slate-50 dark:bg-[#161B22] border border-slate-200 dark:border-[#30363D] flex items-center justify-center text-slate-700 dark:text-slate-200 shadow-sm hover:border-sky-500 dark:hover:border-sky-400 transition active:scale-95"
           title="Go Back"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -223,18 +219,21 @@ export const RegisterPage = ({
         <GitLedgersLogo size="lg" showTagline={false} />
       </div>
 
-      {/* MAIN FORM AREA */}
-      <div className="flex-1 flex flex-col justify-center my-auto space-y-5">
+      {/* 2. MAIN FORM CONTAINER */}
+      <div className="w-full max-w-sm sm:max-w-md mx-auto my-auto py-4">
         
         {/* STEP 1: SIGN UP DETAILS */}
         {step === 1 && (
-          <div className="space-y-5 animate-fadeIn">
+          <div className="w-full space-y-5 animate-fadeIn">
             
             {/* Title */}
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Create your Account
               </h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Enter your info to start managing your earnings
+              </p>
             </div>
 
             {/* Form */}
@@ -242,52 +241,52 @@ export const RegisterPage = ({
               
               {/* First Name */}
               <div className="space-y-1">
-                <div className="bg-white dark:bg-[#161B22] rounded-xl border border-[#E2E8F0] dark:border-[#30363D] shadow-sm transition focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-500/20">
+                <div className="w-full bg-slate-50 dark:bg-[#161B22] rounded-2xl border border-slate-200 dark:border-[#30363D] shadow-sm transition-all focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:bg-white dark:focus-within:bg-[#161B22] focus-within:ring-2 focus-within:ring-sky-500/20">
                   <input
                     type="text"
                     autoComplete="given-name"
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
                     placeholder="First Name"
-                    className="w-full px-4 py-3 text-xs sm:text-sm bg-transparent text-slate-900 dark:text-white rounded-xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    className="w-full px-4 py-3.5 text-sm sm:text-base bg-transparent text-slate-900 dark:text-white rounded-2xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium"
                   />
                 </div>
                 {errors.firstName && (
-                  <p className="text-[10px] font-semibold text-rose-500 dark:text-rose-400 pl-1">{errors.firstName}</p>
+                  <p className="text-xs font-semibold text-rose-500 dark:text-rose-400 pl-1">{errors.firstName}</p>
                 )}
               </div>
 
               {/* Last Name */}
               <div className="space-y-1">
-                <div className="bg-white dark:bg-[#161B22] rounded-xl border border-[#E2E8F0] dark:border-[#30363D] shadow-sm transition focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-500/20">
+                <div className="w-full bg-slate-50 dark:bg-[#161B22] rounded-2xl border border-slate-200 dark:border-[#30363D] shadow-sm transition-all focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:bg-white dark:focus-within:bg-[#161B22] focus-within:ring-2 focus-within:ring-sky-500/20">
                   <input
                     type="text"
                     autoComplete="family-name"
                     value={formData.lastName}
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
                     placeholder="Last Name"
-                    className="w-full px-4 py-3 text-xs sm:text-sm bg-transparent text-slate-900 dark:text-white rounded-xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    className="w-full px-4 py-3.5 text-sm sm:text-base bg-transparent text-slate-900 dark:text-white rounded-2xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium"
                   />
                 </div>
                 {errors.lastName && (
-                  <p className="text-[10px] font-semibold text-rose-500 dark:text-rose-400 pl-1">{errors.lastName}</p>
+                  <p className="text-xs font-semibold text-rose-500 dark:text-rose-400 pl-1">{errors.lastName}</p>
                 )}
               </div>
 
               {/* Email Address */}
               <div className="space-y-1">
-                <div className="bg-white dark:bg-[#161B22] rounded-xl border border-[#E2E8F0] dark:border-[#30363D] shadow-sm transition focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-500/20">
+                <div className="w-full bg-slate-50 dark:bg-[#161B22] rounded-2xl border border-slate-200 dark:border-[#30363D] shadow-sm transition-all focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:bg-white dark:focus-within:bg-[#161B22] focus-within:ring-2 focus-within:ring-sky-500/20">
                   <input
                     type="email"
                     autoComplete="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     placeholder="Email"
-                    className="w-full px-4 py-3 text-xs sm:text-sm bg-transparent text-slate-900 dark:text-white rounded-xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    className="w-full px-4 py-3.5 text-sm sm:text-base bg-transparent text-slate-900 dark:text-white rounded-2xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium"
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-[10px] font-semibold text-rose-500 dark:text-rose-400 pl-1">{errors.email}</p>
+                  <p className="text-xs font-semibold text-rose-500 dark:text-rose-400 pl-1">{errors.email}</p>
                 )}
               </div>
 
@@ -296,7 +295,7 @@ export const RegisterPage = ({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 sm:py-4 rounded-xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-extrabold text-sm shadow-md shadow-sky-500/20 transition active:scale-98 flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-extrabold text-sm sm:text-base shadow-md shadow-sky-500/25 transition active:scale-98 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isLoading ? (
                     <span>Requesting Code...</span>
@@ -331,8 +330,8 @@ export const RegisterPage = ({
 
       </div>
 
-      {/* FOOTER LINK: "Already have an account? Sign in" */}
-      <div className="pt-6 pb-4 text-center text-xs">
+      {/* 3. FOOTER: LINK TO SIGN IN */}
+      <div className="pt-6 pb-2 text-center text-xs sm:text-sm">
         <span className="text-slate-400 dark:text-slate-500">Already have an account? </span>
         <button
           type="button"

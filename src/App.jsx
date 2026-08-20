@@ -133,7 +133,7 @@ export default function App() {
       )}
 
       {/* 2. MAIN APP CONTENT (MOBILE-FIRST EDGE-TO-EDGE) */}
-      <main className="w-full max-w-md mx-auto min-h-screen flex flex-col p-0 m-0">
+      <main className="w-full max-w-md mx-auto min-h-screen flex flex-col p-0 m-0 bg-white dark:bg-[#0D1117] shadow-none sm:shadow-xl sm:border-x sm:border-slate-200 dark:sm:border-[#30363D]">
         
         {/* VIEW 1: AUTHENTICATION FLOW (LANDS ON LOGIN PAGE BY DEFAULT) */}
         {!currentUser ? (

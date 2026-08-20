@@ -6,10 +6,7 @@ import { authApi } from '../../services/authApi.js';
 
 /**
  * GigLedger Login Page
- * Fully integrated with backend passwordless email-OTP endpoints:
- * - POST /api/auth/login -> returns pendingSessionId
- * - POST /api/auth/login/verify -> verifies OTP code and returns token + user
- * - POST /api/auth/resend-otp -> resends OTP code
+ * Mobile-First, fully responsive on all screen sizes (iPhone 12 Pro, Android, iPad, Desktop)
  */
 export const LoginPage = ({
   onLoginSuccess,
@@ -63,7 +60,7 @@ export const LoginPage = ({
     try {
       const response = await authApi.login({ email: email.trim() });
       const sessionId = response?.data?.pendingSessionId || response?.pendingSessionId || '';
-      
+
       setPendingSessionId(sessionId);
 
       if (rememberEmail) {
@@ -125,7 +122,6 @@ export const LoginPage = ({
         };
       }
 
-      // Persist session token and user details
       storage.setAuthSession(user, token);
 
       const displayName = user.firstName || user.name || user.email;
@@ -153,7 +149,6 @@ export const LoginPage = ({
 
   const handleResendOtp = async () => {
     if (!pendingSessionId) {
-      // Re-trigger login if session id is missing
       handleEmailSubmit();
       return;
     }
@@ -179,25 +174,28 @@ export const LoginPage = ({
   };
 
   return (
-    <div className={`w-full max-w-sm sm:max-w-md mx-auto min-h-screen bg-[#F8FAFC] dark:bg-[#0D1117] text-slate-800 dark:text-slate-100 flex flex-col justify-between p-6 sm:p-8 select-none transition-colors ${className}`}>
+    <div className={`w-full min-h-screen flex flex-col justify-between px-6 py-8 sm:px-8 bg-white dark:bg-[#0D1117] text-slate-900 dark:text-slate-100 select-none transition-colors ${className}`}>
       
-      {/* TOP HEADER: CENTERED LOGO */}
-      <div className="pt-10 pb-6 flex justify-center">
+      {/* 1. TOP HEADER: CENTERED LOGO */}
+      <div className="pt-6 sm:pt-10 pb-6 flex justify-center items-center w-full">
         <GitLedgersLogo size="lg" showTagline={false} />
       </div>
 
-      {/* MAIN FORM AREA */}
-      <div className="flex-1 flex flex-col justify-center my-auto space-y-6">
+      {/* 2. MAIN FORM CONTAINER */}
+      <div className="w-full max-w-sm sm:max-w-md mx-auto my-auto py-4">
         
         {/* STEP 1: EMAIL ENTRY */}
         {step === 1 && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="w-full space-y-6 animate-fadeIn">
             
             {/* Title */}
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Login to your Account
               </h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Enter your email to receive a secure login code
+              </p>
             </div>
 
             {/* Form */}
@@ -205,7 +203,7 @@ export const LoginPage = ({
               
               {/* Email Input Field */}
               <div className="space-y-1.5">
-                <div className="bg-white dark:bg-[#161B22] rounded-xl border border-[#E2E8F0] dark:border-[#30363D] shadow-sm transition focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:ring-2 focus-within:ring-sky-500/20">
+                <div className="w-full bg-slate-50 dark:bg-[#161B22] rounded-2xl border border-slate-200 dark:border-[#30363D] shadow-sm transition-all focus-within:border-sky-500 dark:focus-within:border-sky-400 focus-within:bg-white dark:focus-within:bg-[#161B22] focus-within:ring-2 focus-within:ring-sky-500/20">
                   <input
                     type="email"
                     autoComplete="email"
@@ -215,11 +213,11 @@ export const LoginPage = ({
                       if (emailError) setEmailError('');
                     }}
                     placeholder="Email"
-                    className="w-full px-4 py-3.5 text-xs sm:text-sm bg-transparent text-slate-900 dark:text-white rounded-xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    className="w-full px-4 py-4 text-sm sm:text-base bg-transparent text-slate-900 dark:text-white rounded-2xl outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 font-medium"
                   />
                 </div>
                 {emailError && (
-                  <p className="text-[11px] font-semibold text-rose-500 dark:text-rose-400 pl-1">{emailError}</p>
+                  <p className="text-xs font-semibold text-rose-500 dark:text-rose-400 pl-1">{emailError}</p>
                 )}
               </div>
 
@@ -228,7 +226,7 @@ export const LoginPage = ({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 sm:py-4 rounded-xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-extrabold text-sm shadow-md shadow-sky-500/20 transition active:scale-98 flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-extrabold text-sm sm:text-base shadow-md shadow-sky-500/25 transition active:scale-98 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isLoading ? (
                     <span>Requesting Code...</span>
@@ -263,8 +261,8 @@ export const LoginPage = ({
 
       </div>
 
-      {/* FOOTER LINK: "Don't have an account? Sign up" */}
-      <div className="pt-6 pb-4 text-center text-xs">
+      {/* 3. FOOTER: LINK TO REGISTER */}
+      <div className="pt-6 pb-2 text-center text-xs sm:text-sm">
         <span className="text-slate-400 dark:text-slate-500">Don't have an account? </span>
         <button
           type="button"
