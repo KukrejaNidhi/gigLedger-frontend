@@ -163,7 +163,8 @@ export default function App() {
                 <HomePage
                   user={currentUser}
                   onShowToast={showToast}
-                  currency="₹"
+                  onOpenDiffModal={() => setIsDiffOpen(true)}
+                  currency="$"
                   isQuickAddOpen={isQuickAddOpen}
                   onCloseQuickAdd={() => setIsQuickAddOpen(false)}
                 />
