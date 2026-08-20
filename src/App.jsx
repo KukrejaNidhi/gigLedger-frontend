@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { LogOut } from 'lucide-react';
 import {
   HatchedBenchmarkBarChart,
   TorusHaloDial,
@@ -28,12 +29,22 @@ import {
   StandardToastNotification,
   ThemeToggleSwitch,
   BottomNavigationDock,
+  GitLedgersLogo,
+  SplashScreen,
+  LoginPage,
+  RegisterPage,
 } from './components/index.js';
+import { storage } from './utils/storage.js';
 
 export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [viewMode, setViewMode] = useState('app');
-  const [activeDashboard, setActiveDashboard] = useState('command');
+  const [showSplash, setShowSplash] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => storage.getThemePref());
+  const [currentUser, setCurrentUser] = useState(() => {
+    const session = storage.getAuthSession();
+    return session ? session.user : null;
+  });
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [activeDashboard, setActiveDashboard] = useState('command'); // 'command' | 'platforms' | 'taxvault'
   const [isDiffOpen, setIsDiffOpen] = useState(false);
   const [toast, setToast] = useState({
     open: false,
@@ -42,15 +53,26 @@ export default function App() {
     type: 'info',
   });
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (!isDarkMode) {
+  // Apply dark mode class to document root on mount & change
+  useEffect(() => {
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
-      showToast('Obsidian Dark Mode Active', 'Refined non-neon matte slate theme engaged.', 'info');
     } else {
       document.documentElement.classList.remove('dark');
-      showToast('Solar Minimal Light Mode Active', 'Clean white canvas with solar yellow palette.', 'info');
     }
+    storage.setThemePref(isDarkMode);
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(prev => {
+      const next = !prev;
+      if (next) {
+        showToast('Obsidian Dark Mode', 'Refined matte slate theme engaged.', 'info');
+      } else {
+        showToast('Solar Minimal Light Mode', 'Clean white canvas with electric sky palette.', 'info');
+      }
+      return next;
+    });
   };
 
   const showToast = (title, message, type = 'info') => {
@@ -60,178 +82,193 @@ export default function App() {
     }, 4000);
   };
 
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    showToast('Session Verified', `Authenticated as ${user.name || user.email}. Welcome!`, 'success');
+  };
+
+  const handleRegisterSuccess = (newUser) => {
+    setCurrentUser(newUser);
+    showToast('Account Ready', `Welcome to gigLedgers, ${newUser.firstName || newUser.name}!`, 'success');
+  };
+
+  const handleLogout = () => {
+    const userName = currentUser?.firstName || currentUser?.name || 'User';
+    storage.clearAuthSession();
+    setCurrentUser(null);
+    setAuthMode('login');
+    showToast('Signed Out', `Goodbye ${userName}. Your 2FA session has been securely ended.`, 'info');
+  };
+
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-800'} font-sans p-2 sm:p-6 flex flex-col items-center transition-colors duration-300`}>
+    <div className={`min-h-screen w-full ${isDarkMode ? 'dark bg-[#0D1117] text-slate-100' : 'bg-[#F8FAFC] text-slate-800'} font-sans p-0 m-0 flex flex-col items-center justify-start transition-colors duration-300`}>
       
-      {/* Top Controller Bar */}
-      <header className="w-full max-w-6xl mb-6 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-yellow-300 text-slate-950 flex items-center justify-center font-extrabold text-base shadow-sm">
-            GL
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">GitLedgers React-JS Suite</h1>
-              <span className="px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-950/60 text-yellow-800 dark:text-yellow-300 text-[10px] font-bold uppercase tracking-wider border border-yellow-200 dark:border-yellow-800/60">
-                32 Components Active
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Zero hardcoded colors · Mobile-first · React-JS</p>
-          </div>
-        </div>
+      {/* 1. OPENING BOOTING SPLASH SCREEN (Dynamic Theme & Kinetic Typography Bouncing) */}
+      {showSplash && (
+        <SplashScreen
+          isDarkMode={isDarkMode}
+          onComplete={() => setShowSplash(false)}
+          duration={2200}
+        />
+      )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button 
-            onClick={() => setViewMode('app')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition ${viewMode === 'app' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
-          >
-            📱 Mobile App View
-          </button>
-          <button 
-            onClick={() => setViewMode('gallery')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition ${viewMode === 'gallery' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
-          >
-            🧩 Component Gallery (32)
-          </button>
-          <ThemeToggleSwitch isDarkMode={isDarkMode} onToggle={toggleTheme} />
-        </div>
-      </header>
+      {/* 2. MAIN APP CONTENT (MOBILE-FIRST EDGE-TO-EDGE) */}
+      <main className="w-full max-w-md mx-auto min-h-screen flex flex-col p-0 m-0">
+        
+        {/* VIEW 1: AUTHENTICATION FLOW (LANDS ON LOGIN PAGE BY DEFAULT) */}
+        {!currentUser ? (
+          <div className="w-full min-h-screen flex flex-col p-0 m-0 animate-fadeIn">
+            {authMode === 'login' ? (
+              <LoginPage
+                onLoginSuccess={handleLoginSuccess}
+                onNavigateToRegister={() => setAuthMode('register')}
+                onShowToast={showToast}
+              />
+            ) : (
+              <RegisterPage
+                onRegisterSuccess={handleRegisterSuccess}
+                onNavigateToLogin={() => setAuthMode('login')}
+                onShowToast={showToast}
+              />
+            )}
+          </div>
+        ) : (
+          /* VIEW 2: AUTHENTICATED MOBILE APP DASHBOARD */
+          <div className="w-full min-h-screen p-4 pb-20 space-y-4 animate-fadeIn bg-[#F8FAFC] dark:bg-[#0D1117]">
+            
+            {/* App Internal Header with User Profile, Theme Switcher & Logout */}
+            <div className="w-full bg-white dark:bg-[#161B22] p-3.5 rounded-2xl border border-[#E2E8F0] dark:border-[#30363D] flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-2">
+                <GitLedgersLogo size="sm" showTagline={false} />
+              </div>
 
-      {/* VIEW 1: Mobile Simulator View */}
-      {viewMode === 'app' ? (
-        <main className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-center justify-center">
-          
-          {/* Left: 3-Dashboard Navigator */}
-          <div className="w-full lg:w-80 space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Dashboard Switcher</div>
-              <div className="grid grid-cols-1 gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{currentUser.firstName || currentUser.name || 'Active'}</span>
+                </div>
+                <ThemeToggleSwitch isDarkMode={isDarkMode} onToggle={toggleTheme} />
                 <button
-                  onClick={() => setActiveDashboard('command')}
-                  className={`text-left p-3 rounded-2xl font-bold flex items-center justify-between transition ${activeDashboard === 'command' ? 'bg-yellow-300 text-slate-950 shadow-sm' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
+                  onClick={handleLogout}
+                  className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60 transition"
+                  title="Sign Out"
                 >
-                  <span>1. Financial Command</span>
-                  <span className="text-[10px] font-mono opacity-80">Solar Wave</span>
-                </button>
-                <button
-                  onClick={() => setActiveDashboard('platforms')}
-                  className={`text-left p-3 rounded-2xl font-bold flex items-center justify-between transition ${activeDashboard === 'platforms' ? 'bg-yellow-300 text-slate-950 shadow-sm' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
-                >
-                  <span>2. Multi-Platform Hub</span>
-                  <span className="text-[10px] font-mono opacity-80">Inflow</span>
-                </button>
-                <button
-                  onClick={() => setActiveDashboard('taxvault')}
-                  className={`text-left p-3 rounded-2xl font-bold flex items-center justify-between transition ${activeDashboard === 'taxvault' ? 'bg-yellow-300 text-slate-950 shadow-sm' : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
-                >
-                  <span>3. Explainable Tax Vault</span>
-                  <span className="text-[10px] font-mono opacity-80">RAG Math</span>
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs shadow-sm">
-              <div className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Autonomous Agentic Diff</div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Trigger live 1-Tap Before/After Diff modal for $42.50 Shell fuel receipt.</p>
-              <SolarActionButton label="⚡ Review 1 Agent Proposal" onClick={() => setIsDiffOpen(true)} />
+            {/* Dashboard Navigation Tabs in Sky Blue */}
+            <div className="w-full bg-white dark:bg-[#161B22] p-1.5 rounded-2xl border border-[#E2E8F0] dark:border-[#30363D] flex items-center justify-between gap-1 text-xs shadow-sm overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setActiveDashboard('command')}
+                className={`flex-1 py-2 px-2.5 rounded-xl font-bold whitespace-nowrap text-center transition ${
+                  activeDashboard === 'command'
+                    ? 'bg-sky-500 text-white shadow-sm font-extrabold'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                1. Command
+              </button>
+              <button
+                onClick={() => setActiveDashboard('platforms')}
+                className={`flex-1 py-2 px-2.5 rounded-xl font-bold whitespace-nowrap text-center transition ${
+                  activeDashboard === 'platforms'
+                    ? 'bg-sky-500 text-white shadow-sm font-extrabold'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                2. Inflow
+              </button>
+              <button
+                onClick={() => setActiveDashboard('taxvault')}
+                className={`flex-1 py-2 px-2.5 rounded-xl font-bold whitespace-nowrap text-center transition ${
+                  activeDashboard === 'taxvault'
+                    ? 'bg-sky-500 text-white shadow-sm font-extrabold'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                3. Tax Vault
+              </button>
             </div>
-          </div>
 
-          {/* Center Phone Frame */}
-          <div className="relative w-[390px] h-[834px] bg-slate-900 dark:bg-black rounded-[52px] p-[10px] shadow-[0_20px_70px_rgba(0,0,0,0.15)] dark:shadow-[0_25px_80px_rgba(0,0,0,0.85)] border-[4px] border-slate-300 dark:border-slate-800 flex flex-col justify-between overflow-hidden">
-            <div className="relative w-full h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 rounded-[42px] overflow-hidden flex flex-col justify-between select-none">
-              
-              {/* Dynamic Island Status Bar */}
-              <div className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center px-7 pt-3 pb-1 text-xs font-semibold pointer-events-none text-slate-900 dark:text-white">
-                <span>9:41</span>
-                <div className="w-24 h-6 bg-black rounded-full mx-auto flex items-center justify-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-sky-400"></span>
-                  <span className="text-[9px] text-slate-300 font-mono">Agent</span>
+            {/* DASHBOARD 1: FINANCIAL COMMAND */}
+            {activeDashboard === 'command' && (
+              <div className="space-y-4 animate-fadeIn">
+                <HeroCommandHeader 
+                  userName={currentUser.firstName || currentUser.name || 'Earner'} 
+                  balance="$4,850.00" 
+                  onNotificationClick={() => showToast('Approaching Q3 Tax Deadline', 'Due September 15. Reserve ready: $1,120.00', 'alert')} 
+                />
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <PastelWaveCard variant="sky" title="Gross Inflow" amount="↑ $5,200.00" />
+                  <PastelWaveCard variant="steel" title="Tax Reserve" amount="$1,120.00" />
                 </div>
-                <div className="flex items-center gap-1 text-[11px]">
-                  <span>5G</span>
-                  <span>100%</span>
+
+                <SegmentedLiquiditySlider safeCash="$3,730.00" safePercent={65} taxPercent={23} expensePercent={12} variant="sky" />
+
+                <AgentStatusPill 
+                  summaryText="Shell Gas $42.50 · Matched Uber shift" 
+                  onReviewClick={() => setIsDiffOpen(true)} 
+                  variant="coral"
+                />
+
+                <HatchedBenchmarkBarChart variant="sky" />
+
+                <div className="bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E2E8F0] dark:border-[#30363D] space-y-2.5 shadow-sm">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recent Transactions</div>
+                  <TransactionItemRow platformName="Uber Driver Direct Deposit" amount="+$1,120.00" isIncome={true} logoLetter="UBER" />
+                  <TransactionItemRow platformName="Shell Gas Station #2041" amount="-$42.50" isIncome={false} tagText="Sched C" logoLetter="GAS" />
                 </div>
               </div>
+            )}
 
-              {/* DASHBOARD 1: COMMAND */}
-              {activeDashboard === 'command' && (
-                <div className="flex-1 overflow-y-auto no-scrollbar pt-14 px-5 pb-24 space-y-4">
-                  <HeroCommandHeader 
-                    userName="Alton" 
-                    balance="$4,850.00" 
-                    onNotificationClick={() => showToast('Approaching Q3 Tax Deadline', 'Due September 15. Reserve ready: $1,120.00', 'alert')} 
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <PastelWaveCard variant="sky" title="Gross Inflow" amount="↑ $5,200.00" />
-                    <PastelWaveCard variant="yellow" title="Tax Reserve" amount="$1,120.00" />
-                  </div>
-
-                  <SegmentedLiquiditySlider safeCash="$3,730.00" safePercent={65} taxPercent={23} expensePercent={12} variant="sky" />
-
-                  <AgentStatusPill 
-                    summaryText="Shell Gas $42.50 · Matched Uber shift" 
-                    onReviewClick={() => setIsDiffOpen(true)} 
-                    variant="coral"
-                  />
-
-                  <HatchedBenchmarkBarChart variant="sky" />
-
-                  <div className="space-y-2">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">Recent Activity</div>
-                    <TransactionItemRow platformName="Uber Driver Direct Deposit" amount="+$1,120.00" isIncome={true} logoLetter="UBER" />
-                    <TransactionItemRow platformName="Shell Gas Station #2041" amount="-$42.50" isIncome={false} tagText="Sched C" logoLetter="GAS" />
-                  </div>
+            {/* DASHBOARD 2: PLATFORMS / INFLOW */}
+            {activeDashboard === 'platforms' && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E2E8F0] dark:border-[#30363D] shadow-sm">
+                  <h2 className="text-sm font-bold">Multi-Platform Inflow Hub</h2>
+                  <span className="text-xs font-mono font-bold text-[#38BDF8]">Live Sync</span>
                 </div>
-              )}
 
-              {/* DASHBOARD 2: PLATFORMS */}
-              {activeDashboard === 'platforms' && (
-                <div className="flex-1 overflow-y-auto no-scrollbar pt-14 px-5 pb-24 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <button onClick={() => setActiveDashboard('command')} className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500">←</button>
-                    <h2 className="text-sm font-bold">Multi-Platform Inflow</h2>
-                    <div className="w-8"></div>
-                  </div>
+                <PlatformSwitcherTabs variant="sky" />
 
-                  <PlatformSwitcherTabs variant="yellow" />
+                <ShiftCalendarStrip variant="sky" />
 
-                  <ShiftCalendarStrip variant="sky" />
+                <MultiPlatformDonutGauge />
 
-                  <MultiPlatformDonutGauge />
+                <FeeBreakdownPopover />
 
-                  <FeeBreakdownPopover />
+                <PlatformConnectionCard onConnect={() => showToast('Connecting New API', 'Instacart OAuth bridge initiated.', 'info')} />
+              </div>
+            )}
 
-                  <PlatformConnectionCard onConnect={() => showToast('Connecting New API', 'Instacart OAuth bridge initiated.', 'info')} />
+            {/* DASHBOARD 3: TAX VAULT */}
+            {activeDashboard === 'taxvault' && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="flex items-center justify-between bg-white dark:bg-[#161B22] p-4 rounded-2xl border border-[#E2E8F0] dark:border-[#30363D] shadow-sm">
+                  <h2 className="text-sm font-bold">Explainable Tax Vault</h2>
+                  <span className="text-xs font-bold text-[#38BDF8] font-mono">Q3 2024</span>
                 </div>
-              )}
 
-              {/* DASHBOARD 3: TAX VAULT */}
-              {activeDashboard === 'taxvault' && (
-                <div className="flex-1 overflow-y-auto no-scrollbar pt-14 px-5 pb-24 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <button onClick={() => setActiveDashboard('command')} className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500">←</button>
-                    <h2 className="text-sm font-bold">Explainable Tax Vault</h2>
-                    <span className="text-xs font-bold text-sky-500 font-mono">Q3 2024</span>
-                  </div>
+                <TaxLiabilityCard liabilityAmount="$1,120.00" variant="coral" />
 
-                  <TaxLiabilityCard liabilityAmount="$1,120.00" variant="coral" />
+                <TaxWaterfallFlow variant="coral" />
 
-                  <TaxWaterfallFlow variant="coral" />
+                <QuarterlyHorizonTimeline variant="sky" />
 
-                  <QuarterlyHorizonTimeline variant="sky" />
+                <RAGAuthorityDrawer variant="steel" />
 
-                  <RAGAuthorityDrawer variant="steel" />
-
-                  <div className="flex justify-between items-center px-1">
-                    <DeductionCategoryChip scheduleLine="Line 9" categoryName="Vehicle & Fuel" variant="olive" />
-                    <AuditTrailStamp ruleId="IRS-IRC-162A" />
-                  </div>
+                <div className="flex justify-between items-center px-1">
+                  <DeductionCategoryChip scheduleLine="Line 9" categoryName="Vehicle & Fuel" variant="olive" />
+                  <AuditTrailStamp ruleId="IRS-IRC-162A" />
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Bottom Nav Dock */}
+            {/* Floating Mobile Bottom Dock */}
+            <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40">
               <BottomNavigationDock 
                 activeTab={activeDashboard} 
                 onTabChange={(tab) => {
@@ -239,66 +276,12 @@ export default function App() {
                   else setActiveDashboard(tab);
                 }} 
               />
-
             </div>
-          </div>
 
-        </main>
-      ) : (
-        /* VIEW 2: 32-COMPONENT REFERENCE GALLERY */
-        <section className="w-full max-w-6xl space-y-8 pb-12">
-          
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">32 Custom React-JS Components Reference</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Each component below is live, responsive, and accepts custom <code className="text-sky-500 font-mono">variant</code>, <code className="text-sky-500 font-mono">className</code>, and spread props.
-            </p>
           </div>
+        )}
 
-          {/* Section 1: Charts */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">1. Financial Visualizations & Charts</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <HatchedBenchmarkBarChart variant="sky" />
-              <TorusHaloDial variant="sky" />
-              <SegmentedLiquiditySlider variant="sky" />
-              <PastelWaveCard variant="sky" title="Gross Inflow Wave" amount="$5,200.00" />
-              <MultiPlatformDonutGauge />
-              <TaxWaterfallFlow variant="coral" />
-            </div>
-          </div>
-
-          {/* Section 2: Hero & Bento */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">2. Hero & Metric Bento Containers</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <HeroCommandHeader userName="Sarah" balance="$5,120.00" />
-              <MetricBentoGrid />
-              <ShiftCalendarStrip variant="yellow" />
-            </div>
-          </div>
-
-          {/* Section 3: Agentic AI */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">3. Agentic AI & Human-in-the-Loop</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <AgentStatusPill onReviewClick={() => setIsDiffOpen(true)} variant="coral" />
-              <AgentSubtaskRail />
-            </div>
-          </div>
-
-          {/* Section 4: Scanner & Documents */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">4. Receipt Intelligence & Scanner</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <CameraViewfinderOverlay />
-              <ExtractedEntityCard onConfirm={() => showToast('Receipt Saved', '$42.50 added to ledger.', 'success')} />
-              <DeductionQuickAdder onSelectCategory={(c) => showToast('Category Selected', `Classified under ${c}`, 'info')} />
-            </div>
-          </div>
-
-        </section>
-      )}
+      </main>
 
       {/* 1-Tap Diff Approval Modal */}
       <DiffInspectorModal 
@@ -310,7 +293,7 @@ export default function App() {
         }} 
       />
 
-      {/* Toast Alert */}
+      {/* Global Toast Notification */}
       <StandardToastNotification 
         isOpen={toast.open} 
         title={toast.title} 
