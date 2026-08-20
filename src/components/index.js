@@ -9,3 +9,4 @@ export * from './tax/Tax.jsx';
 export * from './transactions/Transactions.jsx';
 export * from './scanner/Scanner.jsx';
 export * from './primitives/Primitives.jsx';
+export * from './auth/index.js';
