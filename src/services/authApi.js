@@ -99,7 +99,6 @@ export const authApi = {
    * @returns {Promise<{ data: { pendingSessionId: string }, message: string }>}
    */
   async login({ email }) {
-    console.log(email);
     return request('/api/auth/login', {
       method: 'POST',
       body: { email },
