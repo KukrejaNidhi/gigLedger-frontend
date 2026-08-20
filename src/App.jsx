@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Sun, Moon, ShieldCheck, User, Settings, HelpCircle, FileText, Bell } from 'lucide-react';
+import { 
+  LogOut, 
+  Sun, 
+  Moon, 
+  ShieldCheck, 
+  User, 
+  Settings, 
+  HelpCircle, 
+  FileText, 
+  Bell,
+  Sparkles,
+  Camera,
+  Layers,
+  BarChart3,
+  TrendingUp,
+  Receipt
+} from 'lucide-react';
 import {
   HatchedBenchmarkBarChart,
   TorusHaloDial,
@@ -12,24 +28,24 @@ import {
   MetricBentoGrid,
   ShiftCalendarStrip,
   AgentStatusPill,
-  AgentSubtaskRail,
   DiffInspectorModal,
   TaxLiabilityCard,
   RAGAuthorityDrawer,
-  DeductionCategoryChip,
-  AuditTrailStamp,
   PlatformSwitcherTabs,
-  TransactionItemRow,
   PlatformConnectionCard,
   FeeBreakdownPopover,
+  CameraViewfinderOverlay,
+  ExtractedEntityCard,
+  DeductionQuickAdder,
   StandardToastNotification,
   ThemeToggleSwitch,
-  GitLedgersLogo,
   SplashScreen,
   LoginPage,
   RegisterPage,
+  HomeHeader,
   HomePage,
   HomeBottomDock,
+  QuickAddModal,
 } from './components/index.js';
 import { storage } from './utils/storage.js';
 import { authApi } from './services/authApi.js';
@@ -39,12 +55,13 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => storage.getThemePref());
   const [currentUser, setCurrentUser] = useState(() => {
     const session = storage.getAuthSession();
-    return session ? session.user : null;
+    return session ? session.user : { name: 'Nidhi Kukreja', email: 'nidhi@gigledgers.app' };
   });
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'analysis' | 'accounts' | 'more'
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isDiffOpen, setIsDiffOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [toast, setToast] = useState({
     open: false,
     title: '',
@@ -119,20 +136,61 @@ export default function App() {
     showToast('Signed Out', `Goodbye ${userName}. Your 2FA session has been securely ended.`, 'info');
   };
 
+  const handleVoiceCommand = () => {
+    setIsListening(true);
+    showToast('Voice Assistant', 'Listening for commands (e.g. "Spent ₹350 on petrol")...', 'info');
+    setTimeout(() => {
+      setIsListening(false);
+      showToast('Voice Logged', 'Shell Petrol ₹350.00 logged as work mileage expense.', 'success');
+    }, 2200);
+  };
+
+  const handleSearchClick = () => {
+    showToast('Search Ledger', 'Filter transactions by Uber, Zomato, Swiggy, Apple, or tax tags.', 'info');
+  };
+
+  const handleUpgradePro = () => {
+    showToast('GigLedger Pro', 'Unlocked Autonomous Agent Deductions & Multi-Platform Sync!', 'info');
+  };
+
+  // Dynamic header meta per tab for uniform top layout
+  const getHeaderProps = () => {
+    switch (activeTab) {
+      case 'analysis':
+        return {
+          pageTitle: 'Analysis & Forecast',
+          pageSubtitle: 'Live Liquidity & Tax Engine',
+        };
+      case 'accounts':
+        return {
+          pageTitle: 'Connected Accounts',
+          pageSubtitle: '4 Active Platforms Syncing',
+        };
+      case 'more':
+        return {
+          pageTitle: 'Settings & Tax Vault',
+          pageSubtitle: 'Preferences & AI Review',
+        };
+      case 'home':
+      default:
+        return {};
+    }
+  };
+
   return (
-    <div className={`min-h-screen w-full ${isDarkMode ? 'dark bg-[#0D1117] text-slate-100' : 'bg-[#F8FAFC] text-slate-900'} font-sans p-0 m-0 flex flex-col items-center justify-start transition-colors duration-300`}>
+    <div className={`min-h-screen w-full ${isDarkMode ? 'dark bg-[#0A0D12] text-slate-100' : 'bg-[#F4F6F9] text-slate-900'} font-sans p-0 m-0 flex flex-col items-center justify-start transition-colors duration-300`}>
       
       {/* 1. OPENING BOOTING SPLASH SCREEN */}
       {showSplash && (
         <SplashScreen
           isDarkMode={isDarkMode}
           onComplete={() => setShowSplash(false)}
-          duration={2200}
+          duration={1800}
         />
       )}
 
       {/* 2. MAIN APP CONTAINER (MOBILE FIRST EDGE-TO-EDGE) */}
-      <main className="w-full max-w-md mx-auto min-h-screen flex flex-col p-0 m-0 bg-white dark:bg-[#0D1117] shadow-none sm:shadow-xl sm:border-x sm:border-slate-200 dark:sm:border-[#30363D] relative">
+      <main className="w-full max-w-md mx-auto min-h-screen flex flex-col p-0 m-0 bg-white dark:bg-[#0D1117] shadow-none sm:shadow-2xl sm:border-x sm:border-slate-200/90 dark:sm:border-[#30363D] relative">
         
         {/* VIEW 1: AUTHENTICATION (LOGIN / REGISTER) */}
         {!currentUser ? (
@@ -155,16 +213,28 @@ export default function App() {
           /* VIEW 2: AUTHENTICATED APP VIEWS */
           <div className="w-full min-h-screen flex flex-col justify-between">
             
-            {/* ACTIVE TAB CONTENT */}
-            <div className="flex-1 w-full pt-4">
+            {/* UNIFORM APP TOP HEADER */}
+            <div className="sticky top-0 z-30 bg-white/90 dark:bg-[#0D1117]/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/80 px-4 sm:px-5 pt-3 pb-2 shadow-2xs">
+              <HomeHeader
+                user={currentUser}
+                onUpgradePro={handleUpgradePro}
+                onVoiceClick={handleVoiceCommand}
+                onSearchClick={handleSearchClick}
+                isListening={isListening}
+                {...getHeaderProps()}
+              />
+            </div>
+
+            {/* ACTIVE TAB CONTENT AREA */}
+            <div className="flex-1 w-full px-4 sm:px-5 pt-3 pb-28 space-y-4.5">
               
-              {/* TAB 1: HOME PAGE (Matches Reference Layout) */}
+              {/* TAB 1: HOME PAGE */}
               {activeTab === 'home' && (
                 <HomePage
                   user={currentUser}
                   onShowToast={showToast}
                   onOpenDiffModal={() => setIsDiffOpen(true)}
-                  currency="$"
+                  currency="₹"
                   isQuickAddOpen={isQuickAddOpen}
                   onCloseQuickAdd={() => setIsQuickAddOpen(false)}
                 />
@@ -172,84 +242,116 @@ export default function App() {
 
               {/* TAB 2: ANALYSIS */}
               {activeTab === 'analysis' && (
-                <div className="space-y-4 px-4 pb-24 animate-fadeIn">
-                  <div className="flex items-center justify-between py-2">
-                    <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Financial Analysis</h1>
-                    <span className="text-xs font-mono font-bold text-sky-500 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-1 rounded-full border border-sky-200 dark:border-sky-800">Live Forecast</span>
+                <div className="space-y-4 animate-fadeIn">
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Financial Overview</span>
+                    <span className="text-[11px] font-mono font-bold text-sky-500 bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800/50">Live Sync</span>
                   </div>
-
-                  <HeroCommandHeader 
-                    userName={currentUser.firstName || currentUser.name || 'Earner'} 
-                    balance="₹4,850.0" 
-                    onNotificationClick={() => showToast('Tax Alert', 'Reserve ready: ₹1,120.0', 'alert')} 
-                  />
 
                   <div className="grid grid-cols-2 gap-3">
-                    <PastelWaveCard variant="sky" title="Gross Inflow" amount="↑ ₹5,200.0" />
-                    <PastelWaveCard variant="steel" title="Tax Reserve" amount="₹1,120.0" />
+                    <PastelWaveCard variant="sky" title="Gross Inflow" amount="+₹52,000" />
+                    <PastelWaveCard variant="steel" title="Tax Reserve" amount="₹11,200" />
                   </div>
 
-                  <SegmentedLiquiditySlider safeCash="₹3,730.0" safePercent={65} taxPercent={23} expensePercent={12} variant="sky" />
+                  <SegmentedLiquiditySlider safeCash="₹37,300" safePercent={65} taxPercent={23} expensePercent={12} variant="sky" />
                   
-                  <HatchedBenchmarkBarChart variant="sky" />
+                  <HatchedBenchmarkBarChart variant="sky" title="Daily Inflow (Last 7 Days)" totalLabel="₹59,500 total" />
 
-                  <MultiPlatformDonutGauge />
+                  <MultiPlatformDonutGauge 
+                    shares={[
+                      { name: 'Uber Driver', amount: '₹33,500', percent: 52, variant: 'sky' },
+                      { name: 'Zomato / Delivery', amount: '₹18,900', percent: 29, variant: 'coral' },
+                      { name: 'Direct Freelance', amount: '₹11,800', percent: 19, variant: 'olive' },
+                    ]}
+                  />
                 </div>
               )}
 
-              {/* TAB 3: ACCOUNTS / PLATFORMS */}
+              {/* TAB 3: ACCOUNTS & PLATFORMS */}
               {activeTab === 'accounts' && (
-                <div className="space-y-4 px-4 pb-24 animate-fadeIn">
-                  <div className="flex items-center justify-between py-2">
-                    <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Connected Accounts</h1>
-                    <span className="text-xs font-mono font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">4 Active</span>
+                <div className="space-y-4 animate-fadeIn">
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Active Stream Sync</span>
+                    <span className="text-[11px] font-mono font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50">4 Connected</span>
                   </div>
 
-                  <PlatformSwitcherTabs variant="sky" />
+                  <PlatformSwitcherTabs variant="yellow" />
 
                   <ShiftCalendarStrip variant="sky" />
 
-                  <FeeBreakdownPopover />
+                  <FeeBreakdownPopover 
+                    grossPayout="₹13,500.00"
+                    platformCut="-₹2,300.00"
+                    netDeposited="+₹11,200.00"
+                    taxHold="₹2,576.00"
+                  />
 
-                  <PlatformConnectionCard onConnect={() => showToast('New Account', 'Platform connection bridge initiated.', 'info')} />
+                  <PlatformConnectionCard onConnect={() => showToast('New Account', 'Platform connection bridge initiated for Swiggy & Rapido.', 'info')} />
+
+                  {/* RECEIPT EXTRACTION DRAWER */}
+                  <div className="pt-2 space-y-3">
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Instant Receipt Scanner</h3>
+                    <CameraViewfinderOverlay merchantPreview="Bharat Petroleum #2041" onCapture={() => showToast('Receipt Captured', 'Bharat Petroleum #2041 extracted with 99.4% confidence.', 'success')} />
+                    <ExtractedEntityCard 
+                      merchant="Bharat Petroleum #2041"
+                      date="August 20, 2026"
+                      totalAmount="-₹350.00"
+                      taxSchedule="Line 9 (Vehicle & Fuel)"
+                      onConfirm={() => showToast('Deduction Saved', 'Saved ₹70.00 in tax deductions.', 'success')}
+                    />
+                    <DeductionQuickAdder onSelectCategory={(c) => showToast('Category Logged', `Logged expense under ${c}.`, 'info')} />
+                  </div>
                 </div>
               )}
 
               {/* TAB 4: MORE & SETTINGS */}
               {activeTab === 'more' && (
-                <div className="space-y-4 px-4 pb-24 animate-fadeIn">
-                  <div className="flex items-center justify-between py-2">
-                    <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">More & Settings</h1>
-                    <span className="text-xs font-bold text-sky-500 font-mono">Q3 2024</span>
+                <div className="space-y-4 animate-fadeIn">
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Profile & Preferences</span>
+                    <span className="text-[11px] font-mono font-bold text-sky-500">Q3 2026</span>
                   </div>
 
                   {/* USER SUMMARY CARD */}
-                  <div className="p-4 rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200 dark:border-[#30363D] shadow-sm flex items-center justify-between">
+                  <div className="p-4 rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] shadow-sm hover:shadow-md transition-all flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 flex items-center justify-center text-sky-600 dark:text-sky-400">
+                      <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 flex items-center justify-center text-sky-600 dark:text-sky-400 shadow-2xs">
                         <User className="w-6 h-6" />
                       </div>
                       <div>
-                        <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                        <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
                           {currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : currentUser.name || 'Earner'}
                         </h2>
-                        <p className="text-xs text-slate-400 font-mono">{currentUser.email}</p>
+                        <p className="text-xs text-slate-400 font-mono">{currentUser.email || 'earner@gigledgers.app'}</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* TAX VAULT QUICK SUMMARY */}
-                  <TaxLiabilityCard liabilityAmount="₹1,120.0" variant="coral" />
-                  <TaxWaterfallFlow variant="coral" />
+                  {/* TAX VAULT SUMMARY */}
+                  <TaxLiabilityCard liabilityAmount="₹11,200.00" variant="coral" quarterLabel="Advance Tax Reserve" />
+                  <TaxWaterfallFlow 
+                    grossInflow="+₹64,200.00"
+                    deductions="-₹15,700.00"
+                    netScheduleC="₹48,500.00"
+                    totalReserve="₹11,200.00"
+                    variant="coral" 
+                  />
+                  <QuarterlyHorizonTimeline reserveReady="₹11,200.00" variant="sky" />
+                  <RAGAuthorityDrawer 
+                    title="Section 44ADA Presumptive Tax Authority"
+                    excerpt='"Presumptive taxation under Section 44ADA offers 50% flat tax-free expense deduction on gross receipts for gig freelancers and drivers."'
+                    sourceUrl="incometax.gov.in"
+                    variant="steel"
+                  />
 
                   {/* PREFERENCES LIST */}
-                  <div className="rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200 dark:border-[#30363D] p-3 shadow-sm space-y-1">
+                  <div className="rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-3 shadow-sm hover:shadow-md transition-all space-y-1">
                     
                     {/* Dark Mode Toggle */}
-                    <div className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                    <div className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
                       <div className="flex items-center gap-3">
                         {isDarkMode ? <Moon className="w-5 h-5 text-sky-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
-                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Dark Mode</span>
+                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Dark Theme</span>
                       </div>
                       <ThemeToggleSwitch isDarkMode={isDarkMode} onToggle={toggleTheme} />
                     </div>
@@ -257,13 +359,13 @@ export default function App() {
                     {/* AI Agent Review */}
                     <div 
                       onClick={() => setIsDiffOpen(true)}
-                      className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                      className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <ShieldCheck className="w-5 h-5 text-emerald-500" />
                         <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Diff Review (1 Pending)</span>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">1</span>
+                      <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold shadow-2xs">1</span>
                     </div>
 
                     {/* Sign Out */}
@@ -283,7 +385,7 @@ export default function App() {
 
             </div>
 
-            {/* FLOATING BOTTOM NAVIGATION DOCK WITH CENTRAL '+' FAB */}
+            {/* UNIFORM FLOATING BOTTOM DOCK WITH EXACT CENTER '+' FAB */}
             <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40">
               <HomeBottomDock
                 activeTab={activeTab}
@@ -297,17 +399,31 @@ export default function App() {
 
       </main>
 
-      {/* 1-Tap Diff Approval Modal */}
+      {/* GLOBAL 1-TAP DIFF APPROVAL MODAL */}
       <DiffInspectorModal 
         isOpen={isDiffOpen} 
         onClose={() => setIsDiffOpen(false)} 
         onApprove={() => {
           setIsDiffOpen(false);
-          showToast('1-Tap Diff Approved', 'Shell ₹42.50 logged under Schedule C. ₹11.50 tax saved.', 'success');
+          showToast('1-Tap Diff Approved', 'Petrol ₹350.00 logged. ₹70.00 advance tax saved.', 'success');
         }} 
       />
 
-      {/* Global Toast Notification */}
+      {/* GLOBAL QUICK ADD TRANSACTION MODAL (Triggered by '+' FAB on ANY page) */}
+      <QuickAddModal
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
+        onAddTransaction={(newTx) => {
+          showToast(
+            newTx.isIncome ? 'Income Recorded' : 'Spending Recorded',
+            `${newTx.title}: ${newTx.isIncome ? '+' : '-'}₹${newTx.amount.toFixed(2)} logged to ledger.`,
+            'success'
+          );
+        }}
+        currency="₹"
+      />
+
+      {/* GLOBAL TOAST NOTIFICATION */}
       <StandardToastNotification 
         isOpen={toast.open} 
         title={toast.title} 

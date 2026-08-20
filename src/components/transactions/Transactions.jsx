@@ -5,9 +5,9 @@ export const PlatformSwitcherTabs = ({
   tabs = [
     { id: 'all', label: 'All Inflow' },
     { id: 'uber', label: 'Uber', count: 42 },
-    { id: 'doordash', label: 'DoorDash', count: 38 },
-    { id: 'upwork', label: 'Upwork', count: 2 },
-    { id: 'expenses', label: 'Expenses' },
+    { id: 'zomato', label: 'Zomato', count: 38 },
+    { id: 'swiggy', label: 'Swiggy', count: 14 },
+    { id: 'freelance', label: 'Freelance', count: 4 },
   ],
   activeTab = 'all',
   onTabChange,
@@ -47,7 +47,7 @@ export const PlatformSwitcherTabs = ({
 export const TransactionItemRow = ({
   platformName = 'Uber Driver Direct Deposit',
   categoryText = '42 trips completed · Auto-reconciled',
-  amount = '+$1,120.00',
+  amount = '+₹11,200.00',
   isIncome = true,
   tagText,
   logoLetter = 'UBER',
@@ -56,7 +56,7 @@ export const TransactionItemRow = ({
   ...rest
 }) => {
   return (
-    <div className={`w-full bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm ${className}`} {...rest}>
+    <div className={`w-full bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm hover:shadow-md transition-all ${className}`} {...rest}>
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-[9px] text-white tracking-tight">
           {logoLetter}
@@ -95,16 +95,16 @@ export const PlatformConnectionCard = ({
         +
       </div>
       <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Connect New Earning App</div>
-      <div className="text-[10px] text-slate-400">Instacart · Lyft · Fiverr · Stripe</div>
+      <div className="text-[10px] text-slate-400">Swiggy · Zomato · Uber · Rapido</div>
     </div>
   );
 };
 
 export const FeeBreakdownPopover = ({
-  grossPayout = '$1,350.00',
-  platformCut = '-$230.00',
-  netDeposited = '$1,120.00',
-  taxHold = '$257.60',
+  grossPayout = '₹13,500.00',
+  platformCut = '-₹2,300.00',
+  netDeposited = '+₹11,200.00',
+  taxHold = '₹2,576.00',
   className = '',
   ...rest
 }) => {
@@ -117,7 +117,7 @@ export const FeeBreakdownPopover = ({
           <span className="font-mono text-slate-900 dark:text-white font-bold">{grossPayout}</span>
         </div>
         <div className="flex justify-between text-slate-500">
-          <span>− Platform Service Fees (17%)</span>
+          <span>Platform Service Fees (17%)</span>
           <span className="font-mono text-rose-500 font-bold">{platformCut}</span>
         </div>
         <div className="h-px bg-slate-100 dark:bg-slate-800 my-0.5"></div>
