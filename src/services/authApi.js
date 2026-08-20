@@ -16,7 +16,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
  */
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
@@ -99,6 +99,7 @@ export const authApi = {
    * @returns {Promise<{ data: { pendingSessionId: string }, message: string }>}
    */
   async login({ email }) {
+    console.log(email);
     return request('/api/auth/login', {
       method: 'POST',
       body: { email },
