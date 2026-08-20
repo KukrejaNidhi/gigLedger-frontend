@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { GitLedgersLogo } from './GitLedgersLogo.jsx';
 import { OtpVerification } from './OtpVerification.jsx';
-import { SocialAuthButtons } from './SocialAuthButtons.jsx';
 import { storage } from '../../utils/storage.js';
+import { authApi } from '../../services/authApi.js';
 
 /**
- * GitLedgers Registration Page
- * Styled strictly with Electric Sky Blue (#38BDF8 / #0EA5E9), Obsidian (#0D1117), & Solar Canvas (#F8FAFC)
+ * GigLedger Registration Page
+ * Fully integrated with backend passwordless email-OTP endpoints:
+ * - POST /api/auth/register -> returns pendingSessionId
+ * - POST /api/auth/register/verify -> verifies OTP code and returns token + user
+ * - POST /api/auth/resend-otp -> resends OTP code
  */
 export const RegisterPage = ({
   onRegisterSuccess,
@@ -16,6 +19,7 @@ export const RegisterPage = ({
   className = '',
 }) => {
   const [step, setStep] = useState(1); // 1 = Details, 2 = 2FA OTP
+  const [pendingSessionId, setPendingSessionId] = useState('');
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -67,7 +71,7 @@ export const RegisterPage = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleDetailsSubmit = (e) => {
+  const handleDetailsSubmit = async (e) => {
     if (e) e.preventDefault();
 
     if (!validateForm()) {
@@ -81,81 +85,120 @@ export const RegisterPage = ({
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await authApi.register({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+      });
+
+      const sessionId = response?.data?.pendingSessionId || response?.pendingSessionId || '';
+      setPendingSessionId(sessionId);
+
+      storage.setRememberedEmail(formData.email.trim());
       setStep(2);
+
       if (onShowToast) {
         onShowToast(
           'Verification Code Sent',
-          'A 6-digit OTP has been sent to your email.',
+          response?.message || 'A 6-digit OTP has been sent to your email.',
           'info'
         );
       }
-    }, 400);
+    } catch (err) {
+      const msg = err.message || 'Registration failed. Please check your details.';
+      if (onShowToast) {
+        onShowToast('Registration Failed', msg, 'alert');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleOtpVerify = (otpCode) => {
+  const handleOtpVerify = async (otpCode) => {
     setOtpError('');
+
+    if (!otpCode || otpCode.length !== 6 || !/^\d{6}$/.test(otpCode)) {
+      const err = 'Please enter a valid 6-digit verification code.';
+      setOtpError(err);
+      if (onShowToast) {
+        onShowToast('Verification Failed', err, 'alert');
+      }
+      return;
+    }
+
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await authApi.verifyRegistration({
+        pendingSessionId,
+        code: otpCode,
+      });
 
-      if (!otpCode || otpCode.length !== 6 || !/^\d{6}$/.test(otpCode)) {
-        const err = 'Please enter a valid 6-digit verification code.';
-        setOtpError(err);
-        if (onShowToast) {
-          onShowToast('Verification Failed', err, 'alert');
-        }
-        return;
+      const token = response?.data?.token || response?.token;
+      let user = response?.data?.user || response?.user;
+
+      if (!user) {
+        const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
+        user = {
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          name: fullName,
+          email: formData.email.trim(),
+          role: 'Independent Earner',
+        };
       }
 
-      const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
-      const newUser = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        name: fullName,
-        email: formData.email.trim(),
-        role: 'Independent Earner',
-        token: `gl_reg_${Date.now()}`,
-        registeredAt: new Date().toISOString(),
-      };
-
-      storage.setAuthSession(newUser, newUser.token);
+      // Persist session token and user details
+      storage.setAuthSession(user, token);
       storage.setRememberedEmail(formData.email.trim());
 
+      const displayName = user.firstName || formData.firstName.trim();
       if (onShowToast) {
         onShowToast(
           'Account Verified',
-          `Welcome to gigLedgers, ${formData.firstName.trim()}!`,
+          `Welcome to gigLedgers, ${displayName}!`,
           'success'
         );
       }
 
       if (onRegisterSuccess) {
-        onRegisterSuccess(newUser);
+        onRegisterSuccess(user);
       }
-    }, 550);
-  };
-
-  const handleResendOtp = () => {
-    if (onShowToast) {
-      onShowToast(
-        'New Code Sent',
-        'A fresh 6-digit OTP was dispatched to your email.',
-        'info'
-      );
+    } catch (err) {
+      const msg = err.message || 'Invalid or expired verification code.';
+      setOtpError(msg);
+      if (onShowToast) {
+        onShowToast('Verification Failed', msg, 'alert');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSocialClick = (provider) => {
-    setFormData({
-      firstName: provider === 'Google' ? 'Sarah' : 'Alex',
-      lastName: provider === 'Google' ? 'Jenkins' : 'Rivera',
-      email: provider === 'Google' ? 'sarah.google@gitledgers.io' : 'alex.social@gitledgers.io',
-    });
-    if (onShowToast) {
-      onShowToast(`${provider} Connect`, `Pre-filled details from ${provider}. Click Sign up to receive 2FA code.`, 'info');
+  const handleResendOtp = async () => {
+    if (!pendingSessionId) {
+      handleDetailsSubmit();
+      return;
+    }
+
+    try {
+      const response = await authApi.resendOtp({ pendingSessionId });
+      if (response?.data?.pendingSessionId) {
+        setPendingSessionId(response.data.pendingSessionId);
+      }
+      if (onShowToast) {
+        onShowToast(
+          'New Code Sent',
+          response?.message || 'A fresh 6-digit OTP was dispatched to your email.',
+          'info'
+        );
+      }
+    } catch (err) {
+      const msg = err.message || 'Unable to resend OTP. Please try again.';
+      if (onShowToast) {
+        onShowToast('Resend Failed', msg, 'alert');
+      }
     }
   };
 
@@ -166,7 +209,11 @@ export const RegisterPage = ({
       <div className="pt-8 pb-4 relative flex items-center justify-center">
         <button
           type="button"
-          onClick={step === 2 ? () => setStep(1) : onNavigateToLogin}
+          onClick={step === 2 ? () => {
+            setStep(1);
+            setPendingSessionId('');
+            setOtpError('');
+          } : onNavigateToLogin}
           className="absolute left-0 w-9 h-9 rounded-xl bg-white dark:bg-[#161B22] border border-[#E2E8F0] dark:border-[#30363D] flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm hover:border-sky-500 dark:hover:border-sky-400 transition"
           title="Go Back"
         >
@@ -252,7 +299,7 @@ export const RegisterPage = ({
                   className="w-full py-3.5 sm:py-4 rounded-xl bg-sky-500 hover:bg-sky-400 active:bg-sky-600 text-white font-extrabold text-sm shadow-md shadow-sky-500/20 transition active:scale-98 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isLoading ? (
-                    <span>Sending Code...</span>
+                    <span>Requesting Code...</span>
                   ) : (
                     <span>Sign up</span>
                   )}
@@ -260,12 +307,6 @@ export const RegisterPage = ({
               </div>
 
             </form>
-
-            {/* Social Auth Providers */}
-            <SocialAuthButtons
-              actionText="Or sign up with"
-              onSocialLogin={handleSocialClick}
-            />
 
           </div>
         )}
@@ -278,7 +319,11 @@ export const RegisterPage = ({
             actionLabel="Complete Registration"
             onVerify={handleOtpVerify}
             onResend={handleResendOtp}
-            onChangeEmail={() => setStep(1)}
+            onChangeEmail={() => {
+              setStep(1);
+              setPendingSessionId('');
+              setOtpError('');
+            }}
             isLoading={isLoading}
             errorMessage={otpError}
           />
