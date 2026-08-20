@@ -7,6 +7,8 @@ import { ChevronRight, ChevronDown, CheckCircle2, Circle } from 'lucide-react';
  * - Dynamic interactive checklist with circular status
  * - Chevron navigation items
  * - Collapsible "Completed (x)" section
+ * - Tactile card shadows (shadow-sm hover:shadow-md)
+ * - 100% zero emojis
  */
 export const MakeItYoursChecklist = ({
   onItemClick,
@@ -42,20 +44,25 @@ export const MakeItYoursChecklist = ({
     completedItems.length + items.filter((i) => i.completed).length;
 
   return (
-    <div className={`w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200 dark:border-[#30363D] p-5 shadow-sm space-y-4 select-none transition ${className}`}>
+    <div className={`w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-5 shadow-sm hover:shadow-md transition-all space-y-4 select-none ${className}`}>
       
       {/* SECTION HEADING */}
-      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-        Make it yours
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+          Make it yours
+        </h2>
+        <span className="text-[11px] font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/60 px-2 py-0.5 rounded-full border border-sky-200/60 dark:border-sky-800/50">
+          Setup Checklist
+        </span>
+      </div>
 
       {/* CHECKLIST ITEMS */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {items.map((item) => (
           <div
             key={item.id}
             onClick={() => handleRowClick(item)}
-            className="flex items-center justify-between py-1 px-1 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 cursor-pointer transition group"
+            className="flex items-center justify-between py-2 px-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition group"
           >
             <div className="flex items-center gap-3">
               {item.completed ? (
@@ -78,7 +85,7 @@ export const MakeItYoursChecklist = ({
       </div>
 
       {/* COMPLETED ACCORDION */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80">
         <button
           type="button"
           onClick={() => setIsCompletedOpen(!isCompletedOpen)}
@@ -93,7 +100,7 @@ export const MakeItYoursChecklist = ({
         </button>
 
         {isCompletedOpen && (
-          <div className="mt-2 space-y-2 pl-5 animate-fadeIn">
+          <div className="mt-2 space-y-2 pl-4 animate-fadeIn">
             {completedItems.map((comp) => (
               <div key={comp.id} className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
