@@ -35,6 +35,7 @@ import {
   RegisterPage,
 } from './components/index.js';
 import { storage } from './utils/storage.js';
+import { authApi } from './services/authApi.js';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -63,6 +64,23 @@ export default function App() {
     storage.setThemePref(isDarkMode);
   }, [isDarkMode]);
 
+  // Optionally refresh existing session token with backend on mount
+  useEffect(() => {
+    const session = storage.getAuthSession();
+    if (session?.token) {
+      authApi.refresh(session.token)
+        .then(res => {
+          const token = res?.data?.token || res?.token || session.token;
+          const user = res?.data?.user || res?.user || session.user;
+          storage.setAuthSession(user, token);
+          setCurrentUser(user);
+        })
+        .catch(err => {
+          console.warn('Session refresh notice:', err.message);
+        });
+    }
+  }, []);
+
   const toggleTheme = () => {
     setIsDarkMode(prev => {
       const next = !prev;
@@ -84,12 +102,14 @@ export default function App() {
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
-    showToast('Session Verified', `Authenticated as ${user.name || user.email}. Welcome!`, 'success');
+    const displayName = user.firstName || user.name || user.email || 'Earner';
+    showToast('Session Verified', `Authenticated as ${displayName}. Welcome!`, 'success');
   };
 
   const handleRegisterSuccess = (newUser) => {
     setCurrentUser(newUser);
-    showToast('Account Ready', `Welcome to gigLedgers, ${newUser.firstName || newUser.name}!`, 'success');
+    const displayName = newUser.firstName || newUser.name || newUser.email || 'Earner';
+    showToast('Account Ready', `Welcome to gigLedgers, ${displayName}!`, 'success');
   };
 
   const handleLogout = () => {
