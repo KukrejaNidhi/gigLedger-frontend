@@ -1,115 +1,153 @@
 import React from 'react';
-import { Utensils, Banknote, Car, ShoppingBag, Fuel, CreditCard, Wallet } from 'lucide-react';
+import { 
+  Car, 
+  Utensils, 
+  ShoppingBag, 
+  Banknote, 
+  Fuel, 
+  Coffee, 
+  Smartphone, 
+  CreditCard, 
+  Wallet,
+  ArrowUpRight,
+  ArrowDownLeft,
+  ChevronRight
+} from 'lucide-react';
 
 /**
  * Recent Transactions Section
  * Features:
- * - Card-based clean layout matching the reference
- * - Category icon containers in squircle
- * - 100% zero emojis, purely clean vector SVG icons
- * - Positive green income vs neutral spending amount display
+ * - Branded / Category thumbnails (Uber, Zomato, Swiggy, Apple, Shell, Starbucks, etc.)
+ * - Explicit '+' for incoming and '-' for outgoing money in Rupees (₹)
+ * - Tactile card styling with subtle elevation shadows (shadow-sm hover:shadow-md)
+ * - 100% zero emojis, purely clean vector icons
  */
 export const RecentTransactionsList = ({
-  transactions = [
-    {
-      id: 'tx-1',
-      title: 'Food and Dining',
-      icon: 'food',
-      category: 'Food and Dining',
-      method: 'Cash',
-      amount: 100.0,
-      isIncome: false,
-      date: 'Today',
-    },
-    {
-      id: 'tx-2',
-      title: 'Salary',
-      icon: 'salary',
-      category: 'Salary',
-      method: 'Cash',
-      amount: 500.0,
-      isIncome: true,
-      date: 'Today',
-    },
-  ],
+  transactions = [],
   currency = '₹',
   onTransactionClick,
   className = '',
 }) => {
-  const getIcon = (type) => {
-    switch (type) {
-      case 'food':
-        return <Utensils className="w-5 h-5 text-amber-500 dark:text-amber-400" />;
-      case 'salary':
-        return <Banknote className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />;
-      case 'fuel':
-        return <Fuel className="w-5 h-5 text-rose-500 dark:text-rose-400" />;
-      case 'ride':
-        return <Car className="w-5 h-5 text-sky-500 dark:text-sky-400" />;
-      default:
-        return <ShoppingBag className="w-5 h-5 text-sky-500 dark:text-sky-400" />;
-    }
-  };
+  // Render high-fidelity thumbnail for popular brands & categories
+  const renderThumbnail = (tx) => {
+    const brand = (tx.brand || tx.icon || tx.title || '').toLowerCase();
 
-  const getIconBg = (type) => {
-    switch (type) {
-      case 'food':
-        return 'bg-amber-50 dark:bg-amber-950/30 border-amber-200/80 dark:border-amber-800/40';
-      case 'salary':
-        return 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200/80 dark:border-emerald-800/40';
-      case 'fuel':
-        return 'bg-rose-50 dark:bg-rose-950/30 border-rose-200/80 dark:border-rose-800/40';
-      default:
-        return 'bg-sky-50 dark:bg-sky-950/30 border-sky-200/80 dark:border-sky-800/40';
+    if (brand.includes('uber')) {
+      return (
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-black text-white border border-slate-800 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <Car className="w-5 h-5 text-white" />
+        </div>
+      );
     }
+    if (brand.includes('zomato')) {
+      return (
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#E23744] text-white border border-red-500/40 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <Utensils className="w-5 h-5 text-white" />
+        </div>
+      );
+    }
+    if (brand.includes('swiggy')) {
+      return (
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#FC8019] text-white border border-orange-500/40 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <ShoppingBag className="w-5 h-5 text-white" />
+        </div>
+      );
+    }
+    if (brand.includes('shell') || brand.includes('fuel') || brand.includes('gas') || brand.includes('petrol')) {
+      return (
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-500 text-slate-950 border border-amber-400 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <Fuel className="w-5 h-5 text-slate-950 stroke-[2.2]" />
+        </div>
+      );
+    }
+    if (brand.includes('starbucks') || brand.includes('coffee')) {
+      return (
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#00704A] text-white border border-emerald-600 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <Coffee className="w-5 h-5 text-white" />
+        </div>
+      );
+    }
+    if (brand.includes('apple')) {
+      return (
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white border border-slate-700 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <Smartphone className="w-5 h-5 text-slate-200" />
+        </div>
+      );
+    }
+    if (tx.isIncome || brand.includes('salary') || brand.includes('payout')) {
+      return (
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center flex-shrink-0 shadow-xs">
+          <Banknote className="w-5 h-5" />
+        </div>
+      );
+    }
+
+    // Default Expense
+    return (
+      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center flex-shrink-0 shadow-xs">
+        <CreditCard className="w-5 h-5" />
+      </div>
+    );
   };
 
   return (
-    <div className={`w-full space-y-3 select-none ${className}`}>
+    <div className={`w-full space-y-2.5 select-none ${className}`}>
       
-      {/* SECTION TITLE */}
-      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white px-1">
-        Recent Transactions
-      </h2>
+      {/* SECTION TITLE & COUNT */}
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
+          Recent Transactions
+        </h2>
+        <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-slate-500">
+          {transactions.length} items
+        </span>
+      </div>
 
       {/* TRANSACTION CARDS CONTAINER */}
-      <div className="w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200 dark:border-[#30363D] p-3 sm:p-4 shadow-sm space-y-2.5">
+      <div className="w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-2.5 sm:p-3.5 shadow-sm hover:shadow-md transition-shadow divide-y divide-slate-100 dark:divide-slate-800/80">
         {transactions.map((tx) => (
           <div
             key={tx.id}
             onClick={() => onTransactionClick && onTransactionClick(tx)}
-            className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
+            className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer group"
           >
-            {/* LEFT: Category Icon & Details */}
-            <div className="flex items-center gap-3.5">
-              {/* Squircle Icon */}
-              <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center flex-shrink-0 shadow-sm ${getIconBg(tx.icon)}`}>
-                {getIcon(tx.icon)}
-              </div>
+            {/* LEFT: Branded Thumbnail & Metadata */}
+            <div className="flex items-center gap-3">
+              {renderThumbnail(tx)}
 
-              {/* Title & Payment Method */}
               <div className="flex flex-col">
-                <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
+                <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug group-hover:text-sky-600 dark:group-hover:text-sky-400 transition">
                   {tx.title}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1 mt-1">
-                  <Wallet className="w-3 h-3 text-slate-400" />
-                  <span>{tx.method}</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1.5 mt-0.5">
+                  <span className="capitalize">{tx.category || 'General'}</span>
+                  <span>·</span>
+                  <span>{tx.method || 'Card'}</span>
                 </span>
               </div>
             </div>
 
-            {/* RIGHT: Amount & Date */}
+            {/* RIGHT: Amount with + or - and Date */}
             <div className="flex flex-col items-end">
-              <span className={`text-sm sm:text-base font-extrabold font-mono ${
+              <span className={`text-xs sm:text-sm font-extrabold font-mono flex items-center gap-0.5 ${
                 tx.isIncome
-                  ? 'text-emerald-500 dark:text-emerald-400'
-                  : 'text-slate-900 dark:text-white'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-slate-900 dark:text-slate-100'
               }`}>
-                {tx.isIncome ? `+${currency}${tx.amount.toFixed(1)}` : `${currency}${tx.amount.toFixed(1)}`}
+                {tx.isIncome ? (
+                  <>
+                    <span>+</span>
+                    <span>{currency}{Math.abs(tx.amount).toFixed(2)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>-</span>
+                    <span>{currency}{Math.abs(tx.amount).toFixed(2)}</span>
+                  </>
+                )}
               </span>
-              <span className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                {tx.date}
+              <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">
+                {tx.date || 'Today'}
               </span>
             </div>
           </div>
