@@ -1,12 +1,12 @@
 import React from 'react';
-import { Utensils, Banknote, Car, ShoppingBag, Plus, Fuel } from 'lucide-react';
+import { Utensils, Banknote, Car, ShoppingBag, Fuel, CreditCard, Wallet } from 'lucide-react';
 
 /**
  * Recent Transactions Section
  * Features:
  * - Card-based clean layout matching the reference
  * - Category icon containers in squircle
- * - Payment method subtag (Cash / Bank / Card)
+ * - 100% zero emojis, purely clean vector SVG icons
  * - Positive green income vs neutral spending amount display
  */
 export const RecentTransactionsList = ({
@@ -92,8 +92,9 @@ export const RecentTransactionsList = ({
                 <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
                   {tx.title}
                 </span>
-                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                  <span>💵</span> {tx.method}
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1 mt-1">
+                  <Wallet className="w-3 h-3 text-slate-400" />
+                  <span>{tx.method}</span>
                 </span>
               </div>
             </div>
