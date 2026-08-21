@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Check, X, Loader2 } from 'lucide-react';
+import { Sparkles, Check, X, Loader2, CalendarClock } from 'lucide-react';
 import { agentApi } from '../../services/agentApi.js';
 import { categoriesApi } from '../../services/categoriesApi.js';
 
 /**
- * Agent categorization inbox. Per the app's timing contract:
+ * Agent inbox — shared by two proposal types (per docs/agent-memory):
+ * - `categorize`: proposedChange = { categoryId, confidence }
+ * - `deadline_check`: proposedChange = { deadlineId, action } — a deadline
+ *   reminder surfaced by the Tax Center's "Check for reminders now" action,
+ *   not this component. Both share the same approve/reject actions.
+ *
+ * Per the app's timing contract:
  * - GET /api/agent/tasks?status=proposed fires on mount (cheap, read-only).
  * - POST /api/agent/run ONLY fires from the explicit "Categorize my
  *   transactions" tap below — never automatically, it's a real LLM call.
@@ -104,15 +110,17 @@ export const AgentInboxSection = ({ onShowToast, className = '' }) => {
       ) : (
         <div className="space-y-2.5">
           {tasks.map((task) => {
+            const isDeadline = task.type === 'deadline_check';
             const category = categoriesById[task.proposedChange?.categoryId];
             const confidence = task.proposedChange?.confidence;
             return (
               <div key={task._id} className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/40 space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white">
-                    {category?.name || 'Unknown category'}
+                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    {isDeadline && <CalendarClock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
+                    {isDeadline ? 'Deadline Reminder' : category?.name || 'Unknown category'}
                   </span>
-                  {typeof confidence === 'number' && (
+                  {!isDeadline && typeof confidence === 'number' && (
                     <span className="text-[10px] font-mono font-bold text-slate-900 dark:text-white">
                       {Math.round(confidence * 100)}% confident
                     </span>
@@ -127,7 +135,7 @@ export const AgentInboxSection = ({ onShowToast, className = '' }) => {
                     className="flex-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white text-[11px] font-bold flex items-center justify-center gap-1"
                   >
                     <Check className="w-3.5 h-3.5" />
-                    <span>Approve</span>
+                    <span>{isDeadline ? 'Acknowledge' : 'Approve'}</span>
                   </button>
                   <button
                     type="button"
@@ -136,7 +144,7 @@ export const AgentInboxSection = ({ onShowToast, className = '' }) => {
                     className="flex-1 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-60 text-slate-600 dark:text-slate-300 text-[11px] font-bold flex items-center justify-center gap-1"
                   >
                     <X className="w-3.5 h-3.5" />
-                    <span>Reject</span>
+                    <span>{isDeadline ? 'Dismiss' : 'Reject'}</span>
                   </button>
                 </div>
               </div>

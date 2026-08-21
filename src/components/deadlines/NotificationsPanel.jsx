@@ -42,7 +42,7 @@ export const NotificationsPanel = ({ deadlines = [], onClose, onViewAll, currenc
         <div className="space-y-2 max-h-72 overflow-y-auto">
           {deadlines.map((d) => {
             const days = daysUntil(d.dueDate);
-            const isOverdue = days < 0;
+            const isOverdue = d.status === 'overdue';
             return (
               <div
                 key={d._id}

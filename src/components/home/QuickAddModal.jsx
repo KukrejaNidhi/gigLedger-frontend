@@ -9,10 +9,15 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
  * review/approve step after an OCR scan). Also doubles as the edit form when
  * `editTransactionId` is passed — same fields, PUT instead of POST.
  *
- * Fields match POST /api/transactions exactly (docs/endpoints.json):
- *   { type: 'income'|'expense', amount, date, rawDescription?, source? }
- * There is no category or payment-method field on that endpoint, so this form
- * doesn't collect either.
+ * Fields match POST /api/transactions (docs/endpoints.json):
+ *   { type: 'income'|'expense', amount, date, rawDescription?, source?, category? }
+ * There's no payment-method field on that endpoint, so this form doesn't
+ * collect one. `category` isn't user-editable here (no picker) — it's only
+ * ever carried through transparently: from an OCR suggestion
+ * (`initialValues.category = { id, name }`) or preserved as-is when editing
+ * an existing transaction (`initialValues.category` = an id string). Picking
+ * a different category is the categorization agent's job (Tax Center ->
+ * Agent Inbox), not this form's.
  *
  * Categorization is intentionally NOT triggered here — it's an LLM call, and
  * per the app's timing contract every LLM-backed call (agent run, tax
@@ -25,7 +30,7 @@ export const QuickAddModal = ({
   onClose,
   onAddTransaction,
   currency = '₹',
-  initialValues = null, // { type, amount, date, rawDescription, source } from OCR or an existing transaction
+  initialValues = null, // { type, amount, date, rawDescription, source, category } from OCR or an existing transaction
   editTransactionId = null, // when set, submits PUT instead of POST
   title: heading = 'Log Transaction',
   confirmLabel = 'Save to Ledger',
@@ -35,6 +40,8 @@ export const QuickAddModal = ({
   const [date, setDate] = useState(todayIso());
   const [rawDescription, setRawDescription] = useState('');
   const [source, setSource] = useState('');
+  const [categoryId, setCategoryId] = useState(null);
+  const [suggestedCategoryName, setSuggestedCategoryName] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -45,6 +52,15 @@ export const QuickAddModal = ({
     setDate(initialValues?.date || todayIso());
     setRawDescription(initialValues?.rawDescription || '');
     setSource(initialValues?.source || '');
+    // OCR gives { id, name }; an existing transaction gives a plain id string.
+    const category = initialValues?.category;
+    if (category && typeof category === 'object') {
+      setCategoryId(category.id);
+      setSuggestedCategoryName(category.name);
+    } else {
+      setCategoryId(category || null);
+      setSuggestedCategoryName(null);
+    }
     setError(null);
   }, [isOpen, initialValues]);
 
@@ -61,6 +77,7 @@ export const QuickAddModal = ({
       date,
       rawDescription: rawDescription.trim() || undefined,
       source: source.trim() || undefined,
+      category: categoryId || undefined,
     };
 
     setIsSubmitting(true);
@@ -199,6 +216,12 @@ export const QuickAddModal = ({
                 onChange={(e) => setSource(e.target.value)}
                 className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-[#0D1117] border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none"
               />
+            </div>
+          )}
+
+          {suggestedCategoryName && (
+            <div className="text-xs font-semibold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 rounded-xl px-3 py-2">
+              Suggested category: {suggestedCategoryName}
             </div>
           )}
 

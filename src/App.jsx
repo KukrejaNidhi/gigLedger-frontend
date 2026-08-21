@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  HatchedBenchmarkBarChart,
-  SegmentedLiquiditySlider,
-  PastelWaveCard,
-  MultiPlatformDonutGauge,
   DiffInspectorModal,
   StandardToastNotification,
   SplashScreen,
@@ -13,20 +9,18 @@ import {
   HomePage,
   HomeBottomDock,
   AddTransactionFlow,
-  CategoryPieChart,
   TransactionsPage,
   TaxEstimateSection,
   DeadlinesSection,
   AgentInboxSection,
   NotificationsPanel,
   SettingsPage,
+  AnalyticsPage,
 } from './components/index.js';
 import { storage } from './utils/storage.js';
 import { authApi } from './services/authApi.js';
-import { transactionsApi } from './services/transactionsApi.js';
 import { categoriesApi } from './services/categoriesApi.js';
 import { deadlinesApi } from './services/deadlinesApi.js';
-import { buildCategoryBreakdown } from './utils/categoryBreakdown.js';
 import { setUnauthorizedHandler } from './services/apiClient.js';
 
 export default function App() {
@@ -39,8 +33,6 @@ export default function App() {
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'analysis' | 'accounts' | 'settings' | 'transactions'
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const [categoryBreakdown, setCategoryBreakdown] = useState([]);
-  const [categoryBreakdownStatus, setCategoryBreakdownStatus] = useState('idle'); // 'idle' | 'loading' | 'ready' | 'error'
   const [transactionsRefreshTick, setTransactionsRefreshTick] = useState(0);
   const [isDiffOpen, setIsDiffOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -99,37 +91,16 @@ export default function App() {
   // explicit action inside the Tax Center's Deadlines section.
   useEffect(() => {
     if (!currentUser) return;
-    deadlinesApi.list({ status: 'upcoming' })
+    deadlinesApi.list()
       .then((result) => {
-        const items = result?.data?.items || [];
-        const dueSoon = items.filter((d) => {
-          const days = Math.ceil((new Date(d.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-          return days <= 14; // overdue or due within 2 weeks
-        });
+        const items = Array.isArray(result?.data) ? result.data : [];
+        // Server computes status ('due_soon'/'overdue') on every sync using
+        // its own 15-day window — trust it rather than recomputing from dueDate.
+        const dueSoon = items.filter((d) => d.status === 'due_soon' || d.status === 'overdue');
         setDueSoonDeadlines(dueSoon);
       })
       .catch((err) => console.warn('Failed to load deadlines for notifications:', err.message));
   }, [currentUser, deadlinesRefreshTick]);
-
-  // Live category-wise spend breakdown for the Analysis tab pie chart —
-  // fetched once per visit to that tab while authenticated, not re-polled.
-  useEffect(() => {
-    if (activeTab !== 'analysis' || !currentUser || categoryBreakdownStatus !== 'idle') return;
-    setCategoryBreakdownStatus('loading');
-    Promise.all([
-      transactionsApi.listAll({ type: 'expense' }),
-      categoriesApi.list({ type: 'expense' }),
-    ])
-      .then(([transactions, categoriesResult]) => {
-        const breakdown = buildCategoryBreakdown(transactions, categoriesResult?.data || []);
-        setCategoryBreakdown(breakdown);
-        setCategoryBreakdownStatus('ready');
-      })
-      .catch((err) => {
-        console.warn('Category breakdown fetch failed:', err.message);
-        setCategoryBreakdownStatus('error');
-      });
-  }, [activeTab, currentUser, categoryBreakdownStatus]);
 
   const toggleTheme = () => {
     setIsDarkMode(prev => {
@@ -284,43 +255,9 @@ export default function App() {
                 />
               )}
 
-              {/* TAB 2: ANALYSIS */}
+              {/* TAB 2: ANALYSIS — every card backed by GET /api/dashboard/* */}
               {activeTab === 'analysis' && (
-                <div className="space-y-4 animate-fadeIn">
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Financial Overview</span>
-                    <span className="text-[11px] font-mono font-bold text-sky-500 bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800/50">Live Sync</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <PastelWaveCard variant="sky" title="Gross Inflow" amount="+₹52,000" />
-                    <PastelWaveCard variant="steel" title="Tax Reserve" amount="₹11,200" />
-                  </div>
-
-                  <SegmentedLiquiditySlider safeCash="₹37,300" safePercent={65} taxPercent={23} expensePercent={12} variant="sky" />
-                  
-                  <HatchedBenchmarkBarChart variant="sky" title="Daily Inflow (Last 7 Days)" totalLabel="₹59,500 total" />
-
-                  <MultiPlatformDonutGauge
-                    shares={[
-                      { name: 'Uber Driver', amount: '₹33,500', percent: 52, variant: 'sky' },
-                      { name: 'Zomato / Delivery', amount: '₹18,900', percent: 29, variant: 'coral' },
-                      { name: 'Direct Freelance', amount: '₹11,800', percent: 19, variant: 'olive' },
-                    ]}
-                  />
-
-                  {categoryBreakdownStatus === 'error' ? (
-                    <div className="text-[11px] font-semibold text-rose-500 bg-rose-500/10 rounded-2xl px-4 py-3">
-                      Couldn't load category breakdown. Pull to refresh or try again shortly.
-                    </div>
-                  ) : (
-                    <CategoryPieChart
-                      title="Spending by Category"
-                      segments={categoryBreakdownStatus === 'ready' ? categoryBreakdown : []}
-                      emptyLabel={categoryBreakdownStatus === 'loading' ? 'Loading…' : 'No data yet'}
-                    />
-                  )}
-                </div>
+                <AnalyticsPage currency="₹" onShowToast={showToast} />
               )}
 
               {/* TAB 3: TAX CENTER — estimate, deadlines, categorization inbox */}

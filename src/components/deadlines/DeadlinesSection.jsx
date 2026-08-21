@@ -9,6 +9,16 @@ const daysUntil = (dueDate) => {
 
 const formatDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
+// Server computes status ('upcoming'|'due_soon'|'overdue'|'completed') on
+// every sync using its own 15-day window — never recompute it from dueDate
+// here, only use it to pick a display treatment.
+const STATUS_STYLES = {
+  overdue: 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50',
+  due_soon: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50',
+  upcoming: 'bg-slate-50 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-700/40',
+  completed: 'bg-slate-50 dark:bg-slate-800/30 border-slate-200/60 dark:border-slate-800 opacity-60',
+};
+
 /**
  * Full deadlines list — GET fires on mount (cheap, no LLM, self-syncing per
  * the timing contract). "Check for reminders now" explicitly re-runs the
@@ -27,7 +37,7 @@ export const DeadlinesSection = ({ currency = '₹', onShowToast, onDeadlinesCha
   const fetchDeadlines = async () => {
     try {
       const result = await deadlinesApi.list();
-      setItems(result?.data?.items || []);
+      setItems(Array.isArray(result?.data) ? result.data : []);
       setStatus('ready');
     } catch (err) {
       setStatus('error');
@@ -41,9 +51,16 @@ export const DeadlinesSection = ({ currency = '₹', onShowToast, onDeadlinesCha
   const handleCheckNow = async () => {
     setIsRunning(true);
     try {
-      await deadlinesApi.run();
+      const result = await deadlinesApi.run();
+      const notifiedCount = result?.data?.notifiedCount || 0;
       await fetchDeadlines();
-      onShowToast && onShowToast('Deadlines Refreshed', 'Your statutory deadline list is up to date.', 'success');
+      onShowToast && onShowToast(
+        'Deadlines Refreshed',
+        notifiedCount > 0
+          ? `${notifiedCount} new reminder${notifiedCount === 1 ? '' : 's'} sent to your Categorization Agent inbox.`
+          : 'Your statutory deadline list is up to date.',
+        'success'
+      );
       onDeadlinesChanged && onDeadlinesChanged();
     } catch (err) {
       onShowToast && onShowToast('Refresh Failed', err.message || 'Could not refresh deadlines.', 'error');
@@ -100,20 +117,11 @@ export const DeadlinesSection = ({ currency = '₹', onShowToast, onDeadlinesCha
             .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
             .map((d) => {
               const days = daysUntil(d.dueDate);
-              const isOverdue = days < 0 && d.status !== 'completed';
-              const isSoon = days >= 0 && days <= 14 && d.status !== 'completed';
+              const dayLabel = d.status === 'overdue' ? `${Math.abs(days)}d overdue` : days === 0 ? 'Due today' : `${days}d left`;
               return (
                 <div
                   key={d._id}
-                  className={`flex items-center justify-between gap-3 p-3 rounded-2xl border ${
-                    d.status === 'completed'
-                      ? 'bg-slate-50 dark:bg-slate-800/30 border-slate-200/60 dark:border-slate-800 opacity-60'
-                      : isOverdue
-                      ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/50'
-                      : isSoon
-                      ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/50'
-                      : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-700/40'
-                  }`}
+                  className={`flex items-center justify-between gap-3 p-3 rounded-2xl border ${STATUS_STYLES[d.status] || STATUS_STYLES.upcoming}`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <CalendarClock className="w-4 h-4 flex-shrink-0 text-slate-400" />
@@ -121,9 +129,7 @@ export const DeadlinesSection = ({ currency = '₹', onShowToast, onDeadlinesCha
                       <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{d.label}</div>
                       <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                         {formatDate(d.dueDate)}
-                        {d.status !== 'completed' && (
-                          <span> · {isOverdue ? `${Math.abs(days)}d overdue` : days === 0 ? 'Due today' : `${days}d left`}</span>
-                        )}
+                        {d.status !== 'completed' && <span> · {dayLabel}</span>}
                         {d.estimatedAmount != null && (
                           <span> · Est. {currency}{Number(d.estimatedAmount).toLocaleString('en-IN')}</span>
                         )}

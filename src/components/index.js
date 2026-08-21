@@ -18,3 +18,4 @@ export * from './primitives/Primitives.jsx';
 export * from './auth/index.js';
 export * from './home/index.js';
 export * from './settings/SettingsPage.jsx';
+export * from './analytics/AnalyticsPage.jsx';

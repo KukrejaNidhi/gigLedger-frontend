@@ -14,12 +14,13 @@ export const HatchedBenchmarkBarChart = ({
   ],
   title = 'Weekly Inflow',
   totalLabel = '₹59,500 total',
+  periodLabel = 'Last 7 Days',
   variant = 'neutral',
   maxHeight = 100,
   className = '',
   ...rest
 }) => {
-  const maxVal = Math.max(...data.map(d => d.value), 12000);
+  const maxVal = Math.max(...data.map((d) => d.value), 0) || 1; // avoid divide-by-zero when every value is 0/negative
 
   return (
     <div className={`w-full bg-white dark:bg-[#161B22] p-5 rounded-3xl border border-slate-200/80 dark:border-[#30363D] space-y-4 shadow-sm hover:shadow-md transition-all ${className}`} {...rest}>
@@ -29,14 +30,14 @@ export const HatchedBenchmarkBarChart = ({
           <div className="text-base font-extrabold font-mono text-slate-900 dark:text-white mt-0.5">{totalLabel}</div>
         </div>
         <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[11px] font-bold">
-          Last 7 Days
+          {periodLabel}
         </span>
       </div>
 
       {/* Clean, fully rounded bars */}
-      <div className="grid grid-cols-7 gap-2 items-end pt-3 px-1" style={{ height: `${maxHeight}px` }}>
+      <div className="grid gap-2 items-end pt-3 px-1" style={{ height: `${maxHeight}px`, gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}>
         {data.map((item, idx) => {
-          const heightPercent = Math.round((item.value / maxVal) * 100);
+          const heightPercent = Math.max(0, Math.round((item.value / maxVal) * 100));
           return (
             <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end">
               <div 
@@ -162,7 +163,7 @@ export const SegmentedLiquiditySlider = ({
 export const PastelWaveCard = ({
   title = 'Total Earned',
   amount = '₹52,000.00',
-  trend = '+12%',
+  trend = null,
   variant = 'sky',
   isNegative = false,
   className = '',
@@ -174,7 +175,9 @@ export const PastelWaveCard = ({
     <div className={`w-full ${v.bgSubtle} p-5 rounded-3xl border ${v.border} shadow-sm hover:shadow-md transition-all space-y-2.5 ${className}`} {...rest}>
       <div className="flex justify-between items-center">
         <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{title}</span>
-        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full text-slate-900 ${isNegative ? 'bg-rose-100' : 'bg-sky-100'}`}>{trend}</span>
+        {trend && (
+          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full text-slate-900 ${isNegative ? 'bg-rose-100' : 'bg-sky-100'}`}>{trend}</span>
+        )}
       </div>
       <div className="text-2xl font-extrabold font-mono text-slate-900 dark:text-white">{amount}</div>
       <div className="pt-1">

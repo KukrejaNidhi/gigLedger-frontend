@@ -44,13 +44,15 @@ export const AddTransactionFlow = ({ isOpen, onClose, onAddTransaction, currency
     setScanError(null);
     try {
       const result = await receiptsApi.upload(file);
+      // Real shape: { amount, date (ISO), rawDescription, category: {id,name}|null, confidence: 'high'|'low' }
+      // No `type` or `source` — a scanned receipt is always an expense.
       const extracted = result?.data || {};
       setOcrValues({
-        type: extracted.type || 'expense',
+        type: 'expense',
         amount: extracted.amount,
-        date: extracted.date,
-        rawDescription: extracted.rawDescription || extracted.description || extracted.merchant,
-        source: extracted.source,
+        date: extracted.date ? String(extracted.date).slice(0, 10) : undefined,
+        rawDescription: extracted.rawDescription,
+        category: extracted.category || undefined,
       });
       setStep('form');
     } catch (err) {

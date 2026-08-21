@@ -1,7 +1,10 @@
 /**
  * GigLedger Backend Transactions API Client
  * POST /api/transactions body per docs/endpoints.json:
- *   { type: 'income'|'expense', amount, date, rawDescription?, source? }
+ *   { type: 'income'|'expense', amount, date, rawDescription?, source?, category? }
+ * `category` isn't in the Postman collection's example bodies but is a real,
+ * accepted field on the backend's create validator — used to carry through
+ * an OCR-suggested category id (see QuickAddModal).
  */
 import { apiRequest } from './apiClient.js';
 
@@ -13,9 +16,10 @@ export const transactionsApi = {
    * @param {string} params.date - ISO date string (YYYY-MM-DD)
    * @param {string} [params.rawDescription]
    * @param {string} [params.source] - only meaningful for income
+   * @param {string} [params.category] - Category ObjectId
    * @returns {Promise<{ data: Object, message: string }>}
    */
-  async create({ type, amount, date, rawDescription, source }) {
+  async create({ type, amount, date, rawDescription, source, category }) {
     return apiRequest('/api/transactions', {
       method: 'POST',
       body: {
@@ -24,6 +28,7 @@ export const transactionsApi = {
         date,
         ...(rawDescription ? { rawDescription } : {}),
         ...(type === 'income' && source ? { source } : {}),
+        ...(category ? { category } : {}),
       },
     });
   },
