@@ -47,6 +47,7 @@ import {
   HomeBottomDock,
   AddTransactionFlow,
   CategoryPieChart,
+  TransactionsPage,
 } from './components/index.js';
 import { storage } from './utils/storage.js';
 import { authApi } from './services/authApi.js';
@@ -66,6 +67,7 @@ export default function App() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [categoryBreakdown, setCategoryBreakdown] = useState([]);
   const [categoryBreakdownStatus, setCategoryBreakdownStatus] = useState('idle'); // 'idle' | 'loading' | 'ready' | 'error'
+  const [transactionsRefreshTick, setTransactionsRefreshTick] = useState(0);
   const [isDiffOpen, setIsDiffOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [toast, setToast] = useState({
@@ -239,17 +241,19 @@ export default function App() {
           /* VIEW 2: AUTHENTICATED APP VIEWS */
           <div className="w-full min-h-screen flex flex-col justify-between">
             
-            {/* UNIFORM APP TOP HEADER */}
-            <div className="sticky top-0 z-30 bg-white/90 dark:bg-[#0D1117]/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/80 px-4 sm:px-5 pt-3 pb-2 shadow-2xs">
-              <HomeHeader
-                user={currentUser}
-                onUpgradePro={handleUpgradePro}
-                onVoiceClick={handleVoiceCommand}
-                onSearchClick={handleSearchClick}
-                isListening={isListening}
-                {...getHeaderProps()}
-              />
-            </div>
+            {/* UNIFORM APP TOP HEADER (Transactions page renders its own back+title header) */}
+            {activeTab !== 'transactions' && (
+              <div className="sticky top-0 z-30 bg-white/90 dark:bg-[#0D1117]/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/80 px-4 sm:px-5 pt-3 pb-2 shadow-2xs">
+                <HomeHeader
+                  user={currentUser}
+                  onUpgradePro={handleUpgradePro}
+                  onVoiceClick={handleVoiceCommand}
+                  onSearchClick={handleSearchClick}
+                  isListening={isListening}
+                  {...getHeaderProps()}
+                />
+              </div>
+            )}
 
             {/* ACTIVE TAB CONTENT AREA */}
             <div className="flex-1 w-full px-4 sm:px-5 pt-3 pb-28 space-y-4.5">
@@ -263,6 +267,18 @@ export default function App() {
                   currency="₹"
                   isQuickAddOpen={isQuickAddOpen}
                   onCloseQuickAdd={() => setIsQuickAddOpen(false)}
+                  onSeeAllTransactions={() => setActiveTab('transactions')}
+                />
+              )}
+
+              {/* TAB: ALL TRANSACTIONS (CRUD) — reached via "See All" on Home, not a bottom-dock tab */}
+              {activeTab === 'transactions' && (
+                <TransactionsPage
+                  onBack={() => setActiveTab('home')}
+                  onOpenAdd={() => setIsQuickAddOpen(true)}
+                  currency="₹"
+                  refreshTick={transactionsRefreshTick}
+                  onShowToast={showToast}
                 />
               )}
 
@@ -459,6 +475,7 @@ export default function App() {
             `${newTx.rawDescription || (isIncome ? 'Income' : 'Expense')}: ${isIncome ? '+' : '-'}₹${amount.toFixed(2)} logged to ledger.`,
             'success'
           );
+          setTransactionsRefreshTick((tick) => tick + 1);
         }}
         currency="₹"
       />

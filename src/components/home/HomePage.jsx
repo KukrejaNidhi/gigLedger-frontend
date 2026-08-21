@@ -32,6 +32,7 @@ export const HomePage = ({
   currency = '₹',
   isQuickAddOpen = false,
   onCloseQuickAdd,
+  onSeeAllTransactions,
   className = '',
 }) => {
   // Cash Flow & Transaction State with Real Branded Entries in Rupees
@@ -190,6 +191,7 @@ export const HomePage = ({
         transactions={transactions}
         currency={currency}
         onTransactionClick={(tx) => onShowToast && onShowToast('Transaction Details', `${tx.title} · ${tx.isIncome ? '+' : '-'}${currency}${tx.amount.toFixed(2)}`, 'info')}
+        onSeeAllClick={onSeeAllTransactions}
       />
     </div>
   );

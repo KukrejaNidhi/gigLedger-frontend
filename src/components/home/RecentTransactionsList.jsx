@@ -26,6 +26,7 @@ export const RecentTransactionsList = ({
   transactions = [],
   currency = '₹',
   onTransactionClick,
+  onSeeAllClick,
   className = '',
 }) => {
   // Render high-fidelity thumbnail for popular brands & categories
@@ -98,9 +99,21 @@ export const RecentTransactionsList = ({
         <h2 className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 dark:text-white">
           Recent Transactions
         </h2>
-        <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-slate-500">
-          {transactions.length} items
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono font-bold text-slate-400 dark:text-slate-500">
+            {transactions.length} items
+          </span>
+          {onSeeAllClick && (
+            <button
+              type="button"
+              onClick={onSeeAllClick}
+              className="text-[11px] font-bold text-sky-600 dark:text-sky-400 flex items-center gap-0.5"
+            >
+              <span>See All</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* TRANSACTION CARDS CONTAINER */}

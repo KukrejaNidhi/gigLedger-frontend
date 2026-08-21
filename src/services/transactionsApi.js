@@ -63,4 +63,26 @@ export const transactionsApi = {
     }
     return all;
   },
+
+  /** GET /api/transactions/:id */
+  async get(id) {
+    return apiRequest(`/api/transactions/${id}`);
+  },
+
+  /**
+   * PUT /api/transactions/:id — whitelisted field update.
+   * @param {string} id
+   * @param {Object} fields - any of type/amount/date/rawDescription/source/notes etc.
+   */
+  async update(id, fields) {
+    return apiRequest(`/api/transactions/${id}`, {
+      method: 'PUT',
+      body: fields,
+    });
+  },
+
+  /** DELETE /api/transactions/:id — soft delete. */
+  async remove(id) {
+    return apiRequest(`/api/transactions/${id}`, { method: 'DELETE' });
+  },
 };
