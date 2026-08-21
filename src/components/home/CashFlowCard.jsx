@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, TrendingDown, TrendingUp, HelpCircle } from 'lucide-react';
 
 /**
@@ -20,6 +20,7 @@ export const CashFlowCard = ({
   const [selectedTimeframe, setSelectedTimeframe] = useState('This Month');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showNetHelp, setShowNetHelp] = useState(false);
+  const dropdownRef = useRef(null);
 
   const timeframes = ['This Month', 'Last Month', 'This Quarter', 'Year to Date'];
 
@@ -31,11 +32,25 @@ export const CashFlowCard = ({
     if (onTimeframeChange) onTimeframeChange(tf);
   };
 
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDropdownOpen]);
+
   return (
-    <div className={`w-full relative overflow-hidden rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-5 shadow-sm hover:shadow-md transition-all space-y-4 select-none ${className}`}>
-      
-      {/* Background Subtle Gradient Glow */}
-      <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/5 dark:bg-sky-500/10 rounded-full blur-2xl pointer-events-none"></div>
+    <div className={`w-full relative rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-5 shadow-sm hover:shadow-md transition-all space-y-4 select-none ${className}`}>
+
+      {/* Background Subtle Gradient Glow — clipped to its own layer, not the card,
+          so it never clips the dropdown menu below */}
+      <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/5 dark:bg-sky-500/10 rounded-full blur-2xl"></div>
+      </div>
 
       {/* 1. TOP HEADER: "CASH FLOW" & TIMEFRAME DROPDOWN */}
       <div className="flex items-center justify-between relative z-10">
@@ -46,7 +61,7 @@ export const CashFlowCard = ({
         </div>
 
         {/* Dropdown Menu */}
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}

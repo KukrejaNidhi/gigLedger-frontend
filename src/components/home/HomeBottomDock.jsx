@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart3, Landmark, MoreHorizontal, Plus } from 'lucide-react';
+import { Home, BarChart3, Percent, Settings, Plus } from 'lucide-react';
 
 /**
  * Mobile Bottom Navigation Dock with Central Elevated FAB '+'
@@ -78,27 +78,27 @@ export const HomeBottomDock = ({
                 ? 'text-sky-600 dark:text-sky-400 font-bold scale-105'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
-            aria-label="Accounts Tab"
+            aria-label="Tax Center Tab"
           >
-            <Landmark className={`w-5 h-5 ${activeTab === 'accounts' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            <span className="text-[10px] font-semibold tracking-tight">Accounts</span>
+            <Percent className={`w-5 h-5 ${activeTab === 'accounts' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <span className="text-[10px] font-semibold tracking-tight">Tax Center</span>
           </button>
         </div>
 
-        {/* 5. MORE TAB */}
+        {/* 5. SETTINGS TAB */}
         <div className="flex justify-center">
           <button
             type="button"
-            onClick={() => onTabChange && onTabChange('more')}
+            onClick={() => onTabChange && onTabChange('settings')}
             className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-xl transition-all ${
-              activeTab === 'more'
+              activeTab === 'settings'
                 ? 'text-sky-600 dark:text-sky-400 font-bold scale-105'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
-            aria-label="More Tab"
+            aria-label="Settings Tab"
           >
-            <MoreHorizontal className={`w-5 h-5 ${activeTab === 'more' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            <span className="text-[10px] font-semibold tracking-tight">More</span>
+            <Settings className={`w-5 h-5 ${activeTab === 'settings' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <span className="text-[10px] font-semibold tracking-tight">Settings</span>
           </button>
         </div>
 

@@ -6,6 +6,17 @@ import { storage } from '../utils/storage.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
+let unauthorizedHandler = null;
+
+/**
+ * Registers a callback fired once on any 401 from an authenticated call
+ * (expired/invalid token) — App.jsx uses this to clear the session and send
+ * the user back to login, per the "any call returns 401 -> back to login" rule.
+ */
+export function setUnauthorizedHandler(fn) {
+  unauthorizedHandler = fn;
+}
+
 export async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const token = storage.getAuthToken();
@@ -50,6 +61,11 @@ export async function apiRequest(endpoint, options = {}) {
     const error = new Error(errorMsg);
     error.status = response.status;
     error.data = data;
+
+    if (response.status === 401 && unauthorizedHandler) {
+      unauthorizedHandler();
+    }
+
     throw error;
   }
 

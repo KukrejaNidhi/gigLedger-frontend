@@ -1,42 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { X, Plus, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { transactionsApi } from '../../services/transactionsApi.js';
-import { agentApi } from '../../services/agentApi.js';
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
 /**
- * Best-effort auto-categorize: runs the agent's categorize-proposal cycle and,
- * if it produced a proposal for this exact transaction, immediately approves
- * it so the category is applied without the user seeing a manual review step.
- * Never throws — categorization is a nice-to-have on top of a transaction
- * that's already been saved, not a condition for the save succeeding.
- */
-async function tryAutoCategorize(transactionId) {
-  try {
-    const runResult = await agentApi.run();
-    const tasks = runResult?.data?.tasks || [];
-    const task = tasks.find((t) => (t.inputRefs || []).includes(transactionId));
-    if (!task) return null;
-
-    const approveResult = await agentApi.approveTask(task._id);
-    return approveResult?.data?.transaction || null;
-  } catch (err) {
-    console.warn('Auto-categorize skipped:', err.message);
-    return null;
-  }
-}
-
-/**
  * Quick Add Transaction Modal (Triggered by the '+' FAB, manual entry or as the
  * review/approve step after an OCR scan). Also doubles as the edit form when
- * `editTransactionId` is passed — same fields, PUT instead of POST, no
- * auto-categorize re-run.
+ * `editTransactionId` is passed — same fields, PUT instead of POST.
  *
  * Fields match POST /api/transactions exactly (docs/endpoints.json):
  *   { type: 'income'|'expense', amount, date, rawDescription?, source? }
  * There is no category or payment-method field on that endpoint, so this form
  * doesn't collect either.
+ *
+ * Categorization is intentionally NOT triggered here — it's an LLM call, and
+ * per the app's timing contract every LLM-backed call (agent run, tax
+ * estimate) must be explicit and user-initiated, never fired automatically
+ * on a save. See the "Categorize my transactions" action in the Tax Center
+ * tab's Agent Inbox.
  */
 export const QuickAddModal = ({
   isOpen,
@@ -44,7 +26,7 @@ export const QuickAddModal = ({
   onAddTransaction,
   currency = '₹',
   initialValues = null, // { type, amount, date, rawDescription, source } from OCR or an existing transaction
-  editTransactionId = null, // when set, submits PUT instead of POST and skips auto-categorize
+  editTransactionId = null, // when set, submits PUT instead of POST
   title: heading = 'Log Transaction',
   confirmLabel = 'Save to Ledger',
 }) => {
@@ -54,7 +36,6 @@ export const QuickAddModal = ({
   const [rawDescription, setRawDescription] = useState('');
   const [source, setSource] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitPhase, setSubmitPhase] = useState('idle'); // 'idle' | 'saving' | 'categorizing'
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -74,17 +55,15 @@ export const QuickAddModal = ({
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) return;
 
-    const trimmedDescription = rawDescription.trim();
     const payload = {
       type,
       amount: numAmount,
       date,
-      rawDescription: trimmedDescription || undefined,
+      rawDescription: rawDescription.trim() || undefined,
       source: source.trim() || undefined,
     };
 
     setIsSubmitting(true);
-    setSubmitPhase('saving');
     setError(null);
     try {
       let saved;
@@ -94,14 +73,6 @@ export const QuickAddModal = ({
       } else {
         const result = await transactionsApi.create(payload);
         saved = result?.data || payload;
-
-        // Auto-categorize: only makes sense for a fresh transaction that has
-        // a description for the agent to reason about.
-        if (saved?._id && trimmedDescription) {
-          setSubmitPhase('categorizing');
-          const categorized = await tryAutoCategorize(saved._id);
-          if (categorized) saved = categorized;
-        }
       }
 
       if (onAddTransaction) onAddTransaction(saved);
@@ -110,7 +81,6 @@ export const QuickAddModal = ({
       setError(err.message || 'Could not save this transaction. Please try again.');
     } finally {
       setIsSubmitting(false);
-      setSubmitPhase('idle');
     }
   };
 
@@ -245,9 +215,7 @@ export const QuickAddModal = ({
             className="w-full py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-sky-500/25 transition active:scale-98 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            <span>
-              {submitPhase === 'categorizing' ? 'Categorizing…' : submitPhase === 'saving' ? 'Saving…' : confirmLabel}
-            </span>
+            <span>{isSubmitting ? 'Saving…' : confirmLabel}</span>
           </button>
 
         </form>

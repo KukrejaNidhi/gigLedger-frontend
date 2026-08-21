@@ -1,44 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  LogOut, 
-  Sun, 
-  Moon, 
-  ShieldCheck, 
-  User, 
-  Settings, 
-  HelpCircle, 
-  FileText, 
-  Bell,
-  Sparkles,
-  Camera,
-  Layers,
-  BarChart3,
-  TrendingUp,
-  Receipt
-} from 'lucide-react';
 import {
   HatchedBenchmarkBarChart,
-  TorusHaloDial,
   SegmentedLiquiditySlider,
   PastelWaveCard,
   MultiPlatformDonutGauge,
-  QuarterlyHorizonTimeline,
-  TaxWaterfallFlow,
-  HeroCommandHeader,
-  MetricBentoGrid,
-  ShiftCalendarStrip,
-  AgentStatusPill,
   DiffInspectorModal,
-  TaxLiabilityCard,
-  RAGAuthorityDrawer,
-  PlatformSwitcherTabs,
-  PlatformConnectionCard,
-  FeeBreakdownPopover,
-  CameraViewfinderOverlay,
-  ExtractedEntityCard,
-  DeductionQuickAdder,
   StandardToastNotification,
-  ThemeToggleSwitch,
   SplashScreen,
   LoginPage,
   RegisterPage,
@@ -48,12 +15,19 @@ import {
   AddTransactionFlow,
   CategoryPieChart,
   TransactionsPage,
+  TaxEstimateSection,
+  DeadlinesSection,
+  AgentInboxSection,
+  NotificationsPanel,
+  SettingsPage,
 } from './components/index.js';
 import { storage } from './utils/storage.js';
 import { authApi } from './services/authApi.js';
 import { transactionsApi } from './services/transactionsApi.js';
 import { categoriesApi } from './services/categoriesApi.js';
+import { deadlinesApi } from './services/deadlinesApi.js';
 import { buildCategoryBreakdown } from './utils/categoryBreakdown.js';
+import { setUnauthorizedHandler } from './services/apiClient.js';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -63,13 +37,15 @@ export default function App() {
     return session ? session.user : null;
   });
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
-  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'analysis' | 'accounts' | 'more'
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'analysis' | 'accounts' | 'settings' | 'transactions'
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [categoryBreakdown, setCategoryBreakdown] = useState([]);
   const [categoryBreakdownStatus, setCategoryBreakdownStatus] = useState('idle'); // 'idle' | 'loading' | 'ready' | 'error'
   const [transactionsRefreshTick, setTransactionsRefreshTick] = useState(0);
   const [isDiffOpen, setIsDiffOpen] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [dueSoonDeadlines, setDueSoonDeadlines] = useState([]);
+  const [deadlinesRefreshTick, setDeadlinesRefreshTick] = useState(0);
   const [toast, setToast] = useState({
     open: false,
     title: '',
@@ -103,6 +79,37 @@ export default function App() {
         });
     }
   }, []);
+
+  // Global 401 handling: any authenticated call whose token has expired/is
+  // invalid sends the user back to login, per the auth timing contract.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      storage.clearAuthSession();
+      categoriesApi.clearCache();
+      setCurrentUser(null);
+      setAuthMode('login');
+      setActiveTab('home');
+      showToast('Session Expired', 'Please sign in again to continue.', 'info');
+    });
+  }, []);
+
+  // Deadline-driven notifications: GET /api/deadlines is cheap/read-only, so
+  // this is safe on login and whenever a deadline changes (completed, or the
+  // generator was re-run) — never triggers POST /run itself, that stays an
+  // explicit action inside the Tax Center's Deadlines section.
+  useEffect(() => {
+    if (!currentUser) return;
+    deadlinesApi.list({ status: 'upcoming' })
+      .then((result) => {
+        const items = result?.data?.items || [];
+        const dueSoon = items.filter((d) => {
+          const days = Math.ceil((new Date(d.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          return days <= 14; // overdue or due within 2 weeks
+        });
+        setDueSoonDeadlines(dueSoon);
+      })
+      .catch((err) => console.warn('Failed to load deadlines for notifications:', err.message));
+  }, [currentUser, deadlinesRefreshTick]);
 
   // Live category-wise spend breakdown for the Analysis tab pie chart —
   // fetched once per visit to that tab while authenticated, not re-polled.
@@ -158,28 +165,13 @@ export default function App() {
   const handleLogout = () => {
     const userName = currentUser?.firstName || currentUser?.name || 'User';
     storage.clearAuthSession();
+    categoriesApi.clearCache();
     setCurrentUser(null);
     setAuthMode('login');
     setActiveTab('home');
     showToast('Signed Out', `Goodbye ${userName}. Your 2FA session has been securely ended.`, 'info');
   };
 
-  const handleVoiceCommand = () => {
-    setIsListening(true);
-    showToast('Voice Assistant', 'Listening for commands (e.g. "Spent ₹350 on petrol")...', 'info');
-    setTimeout(() => {
-      setIsListening(false);
-      showToast('Voice Logged', 'Shell Petrol ₹350.00 logged as work mileage expense.', 'success');
-    }, 2200);
-  };
-
-  const handleSearchClick = () => {
-    showToast('Search Ledger', 'Filter transactions by Uber, Zomato, Swiggy, Apple, or tax tags.', 'info');
-  };
-
-  const handleUpgradePro = () => {
-    showToast('GigLedger Pro', 'Unlocked Autonomous Agent Deductions & Multi-Platform Sync!', 'info');
-  };
 
   // Dynamic header meta per tab for uniform top layout
   const getHeaderProps = () => {
@@ -191,14 +183,16 @@ export default function App() {
         };
       case 'accounts':
         return {
-          pageTitle: 'Connected Accounts',
-          pageSubtitle: '4 Active Platforms Syncing',
+          pageTitle: 'Tax Center',
+          pageSubtitle: 'Estimate, Deadlines & Categorization',
         };
-      case 'more':
+      case 'settings':
         return {
-          pageTitle: 'Settings & Tax Vault',
-          pageSubtitle: 'Preferences & AI Review',
+          pageTitle: 'Settings',
+          pageSubtitle: 'Profile & Preferences',
         };
+      case 'transactions':
+        return {};
       case 'home':
       default:
         return {};
@@ -246,12 +240,21 @@ export default function App() {
               <div className="sticky top-0 z-30 bg-white/90 dark:bg-[#0D1117]/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800/80 px-4 sm:px-5 pt-3 pb-2 shadow-2xs">
                 <HomeHeader
                   user={currentUser}
-                  onUpgradePro={handleUpgradePro}
-                  onVoiceClick={handleVoiceCommand}
-                  onSearchClick={handleSearchClick}
-                  isListening={isListening}
+                  notificationCount={dueSoonDeadlines.length}
+                  onNotificationClick={() => setIsNotificationsOpen((v) => !v)}
                   {...getHeaderProps()}
                 />
+                {isNotificationsOpen && (
+                  <NotificationsPanel
+                    deadlines={dueSoonDeadlines}
+                    onClose={() => setIsNotificationsOpen(false)}
+                    onViewAll={() => {
+                      setIsNotificationsOpen(false);
+                      setActiveTab('accounts');
+                    }}
+                    currency="₹"
+                  />
+                )}
               </div>
             )}
 
@@ -321,120 +324,28 @@ export default function App() {
                 </div>
               )}
 
-              {/* TAB 3: ACCOUNTS & PLATFORMS */}
+              {/* TAB 3: TAX CENTER — estimate, deadlines, categorization inbox */}
               {activeTab === 'accounts' && (
                 <div className="space-y-4 animate-fadeIn">
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Active Stream Sync</span>
-                    <span className="text-[11px] font-mono font-bold text-slate-900 dark:text-white bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50">4 Connected</span>
-                  </div>
-
-                  <PlatformSwitcherTabs variant="yellow" />
-
-                  <ShiftCalendarStrip variant="sky" />
-
-                  <FeeBreakdownPopover 
-                    grossPayout="₹13,500.00"
-                    platformCut="-₹2,300.00"
-                    netDeposited="+₹11,200.00"
-                    taxHold="₹2,576.00"
+                  <TaxEstimateSection currency="₹" onShowToast={showToast} />
+                  <DeadlinesSection
+                    currency="₹"
+                    onShowToast={showToast}
+                    onDeadlinesChanged={() => setDeadlinesRefreshTick((t) => t + 1)}
                   />
-
-                  <PlatformConnectionCard onConnect={() => showToast('New Account', 'Platform connection bridge initiated for Swiggy & Rapido.', 'info')} />
-
-                  {/* RECEIPT EXTRACTION DRAWER */}
-                  <div className="pt-2 space-y-3">
-                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">Instant Receipt Scanner</h3>
-                    <CameraViewfinderOverlay merchantPreview="Bharat Petroleum #2041" onCapture={() => showToast('Receipt Captured', 'Bharat Petroleum #2041 extracted with 99.4% confidence.', 'success')} />
-                    <ExtractedEntityCard 
-                      merchant="Bharat Petroleum #2041"
-                      date="August 20, 2026"
-                      totalAmount="-₹350.00"
-                      taxSchedule="Line 9 (Vehicle & Fuel)"
-                      onConfirm={() => showToast('Deduction Saved', 'Saved ₹70.00 in tax deductions.', 'success')}
-                    />
-                    <DeductionQuickAdder onSelectCategory={(c) => showToast('Category Logged', `Logged expense under ${c}.`, 'info')} />
-                  </div>
+                  <AgentInboxSection onShowToast={showToast} />
                 </div>
               )}
 
-              {/* TAB 4: MORE & SETTINGS */}
-              {activeTab === 'more' && (
-                <div className="space-y-4 animate-fadeIn">
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Profile & Preferences</span>
-                    <span className="text-[11px] font-mono font-bold text-slate-900 dark:text-white">Q3 2026</span>
-                  </div>
-
-                  {/* USER SUMMARY CARD */}
-                  <div className="p-4 rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] shadow-sm hover:shadow-md transition-all flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 flex items-center justify-center text-sky-600 dark:text-sky-400 shadow-2xs">
-                        <User className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
-                          {currentUser.firstName ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : currentUser.name || 'Earner'}
-                        </h2>
-                        <p className="text-xs text-slate-400 font-mono">{currentUser.email || 'earner@gigledgers.app'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* TAX VAULT SUMMARY */}
-                  <TaxLiabilityCard liabilityAmount="₹11,200.00" variant="coral" quarterLabel="Advance Tax Reserve" />
-                  <TaxWaterfallFlow 
-                    grossInflow="+₹64,200.00"
-                    deductions="-₹15,700.00"
-                    netScheduleC="₹48,500.00"
-                    totalReserve="₹11,200.00"
-                    variant="coral" 
-                  />
-                  <QuarterlyHorizonTimeline reserveReady="₹11,200.00" variant="sky" />
-                  <RAGAuthorityDrawer 
-                    title="Section 44ADA Presumptive Tax Authority"
-                    excerpt='"Presumptive taxation under Section 44ADA offers 50% flat tax-free expense deduction on gross receipts for gig freelancers and drivers."'
-                    sourceUrl="incometax.gov.in"
-                    variant="steel"
-                  />
-
-                  {/* PREFERENCES LIST */}
-                  <div className="rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-3 shadow-sm hover:shadow-md transition-all space-y-1">
-                    
-                    {/* Dark Mode Toggle */}
-                    <div className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
-                      <div className="flex items-center gap-3">
-                        {isDarkMode ? <Moon className="w-5 h-5 text-sky-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
-                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Dark Theme</span>
-                      </div>
-                      <ThemeToggleSwitch isDarkMode={isDarkMode} onToggle={toggleTheme} />
-                    </div>
-
-                    {/* AI Agent Review */}
-                    <div 
-                      onClick={() => setIsDiffOpen(true)}
-                      className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Diff Review (1 Pending)</span>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold shadow-2xs">1</span>
-                    </div>
-
-                    {/* Sign Out */}
-                    <div 
-                      onClick={handleLogout}
-                      className="flex items-center justify-between p-3 rounded-2xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <LogOut className="w-5 h-5" />
-                        <span className="text-sm font-bold">Sign Out</span>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
+              {/* TAB 4: SETTINGS (was "More") */}
+              {activeTab === 'settings' && (
+                <SettingsPage
+                  user={currentUser}
+                  isDarkMode={isDarkMode}
+                  onToggleTheme={toggleTheme}
+                  onOpenTaxCenter={() => setActiveTab('accounts')}
+                  onLogout={handleLogout}
+                />
               )}
 
             </div>
