@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CashFlowCard } from './CashFlowCard.jsx';
 import { HabitTrophyBanner } from './HabitTrophyBanner.jsx';
-import { LiquidityBufferCard } from './LiquidityBufferCard.jsx';
 import { AgentActionCard } from './AgentActionCard.jsx';
-import { FinancialInsightsList } from './FinancialInsightsList.jsx';
 import { MakeItYoursChecklist } from './MakeItYoursChecklist.jsx';
 import { RecentTransactionsList } from './RecentTransactionsList.jsx';
 import { transactionsApi } from '../../services/transactionsApi.js';
@@ -15,16 +13,13 @@ import { sumByTimeframe } from '../../utils/timeframeRange.js';
  * Structure:
  * 1. Cash Flow Summary Card (SPENDING - vs INCOME + with Net Balance), filtered
  *    by the selected timeframe against real transaction dates
- * 2. Net Safe-to-Spend Liquidity Buffer with Multi-Segment Progress Bar
- * 3. Agent Action Pending Card (DIFF preview)
- * 4. Financial Insights (Net Inflow & Tax Reserve Ratio)
- * 5. Recent Transactions List (branded thumbnails), live from the backend
+ * 2. Agent Action Pending Card (DIFF preview)
+ * 3. Recent Transactions List (branded thumbnails), live from the backend
  *
  * Dropped the old "Gross Inflow / Tax Reserve" sparkline cards
- * (PastelWaveMetricCards) — both their headline numbers and their trend
- * badges/sparkline curves were 100% hardcoded with no real data source, and
- * "Gross Inflow" duplicated what CashFlowCard's Income column already shows
- * live.
+ * (PastelWaveMetricCards) and the Net Safe-to-Spend Liquidity Buffer /
+ * Financial Insights cards — all were 100% hardcoded with no real data
+ * source.
  */
 export const HomePage = ({
   user,
@@ -111,30 +106,12 @@ export const HomePage = ({
         </div>
       )}
 
-      {/* 4. NET SAFE-TO-SPEND LIQUIDITY BUFFER CARD */}
-      <LiquidityBufferCard
-        safeAmount={37300.00}
-        safePercent={65}
-        taxPercent={23}
-        expensePercent={12}
-        currency={currency}
-      />
-
       {/* 5. AGENT ACTION PENDING DIFF CARD */}
       <AgentActionCard
         title="Agent Action Pending"
         badgeText="DIFF"
         subtitle="Shell Fuel ₹350.00 · Matched Uber shift"
         onReviewClick={handleReviewProposal}
-      />
-
-      {/* 6. FINANCIAL INSIGHTS SECTION */}
-      <FinancialInsightsList
-        netInflow={3000.00}
-        netInflowPercent={6.1}
-        taxRatioPercent={100}
-        onReviewProposal={handleReviewProposal}
-        currency={currency}
       />
 
       {/* 8. RECENT TRANSACTIONS (branded thumbnails), live from the backend */}

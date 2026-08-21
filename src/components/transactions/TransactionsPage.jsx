@@ -45,6 +45,7 @@ export const TransactionsPage = ({
   const [editingTx, setEditingTx] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [rowBusyId, setRowBusyId] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
 
   // Guards every setState in an async callback against firing after this
   // component has unmounted (e.g. the user switches tabs mid-fetch) —
@@ -198,47 +199,51 @@ export const TransactionsPage = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-3 p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                  <div className="flex items-center gap-3 min-w-0">
-                  <BrandThumbnail transaction={tx} size="sm" />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                      {tx.rawDescription || (tx.type === 'income' ? 'Income' : 'Expense')}
-                    </span>
-                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1.5 mt-0.5">
-                      <span>{formatDate(tx.date)}</span>
-                      <span>·</span>
-                      <span className="capitalize">
-                        {tx.category ? categoriesById[tx.category]?.name || 'Categorized' : 'Uncategorized'}
+                <div
+                  onClick={() => setExpandedId(expandedId === tx._id ? null : tx._id)}
+                  className="p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <BrandThumbnail transaction={tx} size="sm" />
+                      <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                        {tx.rawDescription || (tx.type === 'income' ? 'Income' : 'Expense')}
                       </span>
-                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide ${STATUS_BADGE[tx.status] || STATUS_BADGE.pending}`}>
-                        {STATUS_LABEL[tx.status] || 'Pending'}
-                      </span>
+                    </div>
+                    <span className={`flex-shrink-0 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide ${STATUS_BADGE[tx.status] || STATUS_BADGE.pending}`}>
+                      {STATUS_LABEL[tx.status] || 'Pending'}
                     </span>
-                  </div>
                   </div>
 
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="text-xs sm:text-sm font-extrabold font-mono text-slate-900 dark:text-white mr-1">
+                  <div className="flex items-center justify-between gap-3 mt-1.5">
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                      {formatDate(tx.date)}
+                    </span>
+                    <span className="text-xs sm:text-sm font-extrabold font-mono text-slate-900 dark:text-white">
                       {formatAmount(tx)}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setEditingTx(tx)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition"
-                      aria-label="Edit"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeletingId(tx._id)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
                   </div>
+
+                  {expandedId === tx._id && (
+                    <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setEditingTx(tx); }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition"
+                        aria-label="Edit"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setDeletingId(tx._id); }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

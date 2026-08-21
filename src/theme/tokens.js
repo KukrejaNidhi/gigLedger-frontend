@@ -52,6 +52,16 @@ export const VARIANT_MAP = {
     fill: '#787657',
     stroke: '#92400E',
   },
+  violet: {
+    bg: 'bg-violet-500',
+    bgSubtle: 'bg-violet-50 dark:bg-violet-950/40',
+    text: 'text-violet-600 dark:text-violet-400',
+    border: 'border-violet-200 dark:border-violet-800/60',
+    ring: 'ring-violet-400/40',
+    badge: 'bg-violet-100 text-violet-800 dark:bg-violet-900/60 dark:text-violet-300',
+    fill: '#8B5CF6',
+    stroke: '#6D28D9',
+  },
   emerald: {
     bg: 'bg-emerald-500',
     bgSubtle: 'bg-emerald-50 dark:bg-emerald-950/40',

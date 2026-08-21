@@ -6,7 +6,7 @@
  * computes percentages, and buckets missing/deleted categories as
  * "Uncategorized" — no client-side aggregation needed here.
  */
-const VARIANT_ORDER = ['sky', 'coral', 'emerald', 'yellow', 'steel', 'olive'];
+const VARIANT_ORDER = ['sky', 'coral', 'emerald', 'yellow', 'violet', 'steel'];
 const MAX_SLICES = 5;
 
 export function buildCategoryBreakdown(breakdown) {

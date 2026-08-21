@@ -309,6 +309,7 @@ export const CategoryPieChart = ({
   segments = [],
   title = 'Spending by Category',
   totalLabel,
+  currency = '₹',
   emptyLabel = 'No categorized spending yet',
   size = 148,
   className = '',
@@ -319,6 +320,7 @@ export const CategoryPieChart = ({
   let cumulative = 0;
 
   const hasData = segments.length > 0;
+  const grandTotal = hasData ? segments.reduce((sum, s) => sum + (s.total || 0), 0) : 0;
 
   return (
     <div className={`w-full bg-white dark:bg-[#161B22] p-5 rounded-3xl border border-slate-200/80 dark:border-[#30363D] space-y-4 shadow-sm hover:shadow-md transition-all ${className}`} {...rest}>
@@ -348,10 +350,11 @@ export const CategoryPieChart = ({
                     r={radius}
                     stroke={v.fill}
                     strokeWidth="16"
+                    strokeLinecap="round"
                     strokeDasharray={dash}
                     strokeDashoffset={offset}
                     fill="none"
-                    className="transition-all duration-700 ease-out"
+                    className="transition-all duration-700 ease-out drop-shadow-sm"
                   />
                 );
               })
@@ -360,8 +363,10 @@ export const CategoryPieChart = ({
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3">
             {hasData ? (
               <>
-                <span className="text-[10px] text-slate-400 font-medium">Top</span>
-                <span className="text-xs font-extrabold text-slate-900 dark:text-white leading-tight">{segments[0].name}</span>
+                <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wide">Total</span>
+                <span className="text-sm font-extrabold font-mono text-slate-900 dark:text-white leading-tight">
+                  {currency}{grandTotal.toLocaleString('en-IN')}
+                </span>
               </>
             ) : (
               <span className="text-[10px] text-slate-400 font-medium">{emptyLabel}</span>
@@ -370,18 +375,25 @@ export const CategoryPieChart = ({
         </div>
 
         {/* LEGEND — direct labels + table-equivalent list, never color-only */}
-        <div className="flex-1 space-y-2 min-w-0">
+        <div className="flex-1 space-y-2.5 min-w-0">
           {hasData ? (
             segments.map((seg, idx) => {
               const v = VARIANT_MAP[seg.variant] || VARIANT_MAP.default;
               return (
                 <div key={idx} className="flex items-center justify-between gap-2 text-[11px]">
-                  <span className="flex items-center gap-1.5 min-w-0 text-slate-600 dark:text-slate-300 truncate">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${v.bg}`}></span>
-                    <span className="truncate">{seg.name}</span>
+                  <span className="flex items-center gap-1.5 min-w-0 text-slate-600 dark:text-slate-300">
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${v.bg}`}></span>
+                    <span className="truncate font-semibold">{seg.name}</span>
                   </span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0">
-                    {seg.percent}%
+                  <span className="flex items-baseline gap-1.5 flex-shrink-0">
+                    {typeof seg.total === 'number' && (
+                      <span className="font-mono text-[10px] text-slate-400">
+                        {currency}{seg.total.toLocaleString('en-IN')}
+                      </span>
+                    )}
+                    <span className={`font-mono font-bold w-9 text-right ${v.text}`}>
+                      {seg.percent}%
+                    </span>
                   </span>
                 </div>
               );

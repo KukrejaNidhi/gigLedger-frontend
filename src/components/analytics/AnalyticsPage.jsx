@@ -3,13 +3,10 @@ import { Loader2 } from 'lucide-react';
 import {
   PastelWaveCard,
   HatchedBenchmarkBarChart,
-  MultiPlatformDonutGauge,
   CategoryPieChart,
 } from '../charts/Charts.jsx';
 import { dashboardApi } from '../../services/dashboardApi.js';
 import { buildCategoryBreakdown } from '../../utils/categoryBreakdown.js';
-
-const SOURCE_VARIANTS = ['sky', 'coral', 'olive', 'steel', 'emerald', 'yellow'];
 
 /**
  * Analytics tab — every card here is backed by GET /api/dashboard/*
@@ -20,7 +17,6 @@ const SOURCE_VARIANTS = ['sky', 'coral', 'olive', 'steel', 'emerald', 'yellow'];
 export const AnalyticsPage = ({ currency = '₹', onShowToast, className = '' }) => {
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
   const [summary, setSummary] = useState(null);
-  const [incomeBySource, setIncomeBySource] = useState([]);
   const [expenseByCategory, setExpenseByCategory] = useState([]);
   const [monthlyTrend, setMonthlyTrend] = useState(null);
   const [taxSavings, setTaxSavings] = useState(null);
@@ -30,15 +26,13 @@ export const AnalyticsPage = ({ currency = '₹', onShowToast, className = '' })
     setStatus('loading');
     Promise.all([
       dashboardApi.summary(),
-      dashboardApi.incomeBySource(),
       dashboardApi.expenseByCategory(),
       dashboardApi.monthlyTrend(6),
       dashboardApi.taxSavings(),
     ])
-      .then(([summaryRes, incomeRes, expenseRes, trendRes, savingsRes]) => {
+      .then(([summaryRes, expenseRes, trendRes, savingsRes]) => {
         if (cancelled) return;
         setSummary(summaryRes?.data || null);
-        setIncomeBySource(incomeRes?.data?.breakdown || []);
         setExpenseByCategory(expenseRes?.data?.breakdown || []);
         setMonthlyTrend(trendRes?.data || null);
         setTaxSavings(savingsRes?.data || null);
@@ -70,14 +64,7 @@ export const AnalyticsPage = ({ currency = '₹', onShowToast, className = '' })
   }
 
   const categorySegments = buildCategoryBreakdown(expenseByCategory);
-  const incomeShares = incomeBySource
-    .filter((row) => row.total > 0)
-    .map((row, idx) => ({
-      name: row.source ? row.source.charAt(0).toUpperCase() + row.source.slice(1) : 'Other',
-      amount: `${currency}${Number(row.total).toLocaleString('en-IN')}`,
-      percent: row.percentage,
-      variant: SOURCE_VARIANTS[idx % SOURCE_VARIANTS.length],
-    }));
+  const categoryTotal = categorySegments.reduce((sum, s) => sum + (s.total || 0), 0);
 
   const trendBars = monthlyTrend
     ? monthlyTrend.months.map((label, i) => ({
@@ -123,13 +110,12 @@ export const AnalyticsPage = ({ currency = '₹', onShowToast, className = '' })
         />
       )}
 
-      {/* INCOME BY SOURCE */}
-      {incomeShares.length > 0 && <MultiPlatformDonutGauge title="Income by Source" shares={incomeShares} />}
-
       {/* EXPENSE BY CATEGORY */}
       <CategoryPieChart
         title="Spending by Category"
         segments={categorySegments}
+        totalLabel={categoryTotal > 0 ? `${currency}${categoryTotal.toLocaleString('en-IN')} total` : undefined}
+        currency={currency}
         emptyLabel="No expenses this month"
       />
 
