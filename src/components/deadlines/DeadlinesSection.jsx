@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CalendarClock, Check, Loader2, RefreshCw } from 'lucide-react';
 import { deadlinesApi } from '../../services/deadlinesApi.js';
 
@@ -34,13 +34,17 @@ export const DeadlinesSection = ({ currency = '₹', onShowToast, onDeadlinesCha
   const [completingId, setCompletingId] = useState(null);
   const [showCompleted, setShowCompleted] = useState(false);
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const fetchDeadlines = async () => {
     try {
       const result = await deadlinesApi.list();
+      if (!mountedRef.current) return;
       setItems(Array.isArray(result?.data) ? result.data : []);
       setStatus('ready');
     } catch (err) {
-      setStatus('error');
+      if (mountedRef.current) setStatus('error');
     }
   };
 
@@ -54,6 +58,7 @@ export const DeadlinesSection = ({ currency = '₹', onShowToast, onDeadlinesCha
       const result = await deadlinesApi.run();
       const notifiedCount = result?.data?.notifiedCount || 0;
       await fetchDeadlines();
+      if (!mountedRef.current) return;
       onShowToast && onShowToast(
         'Deadlines Refreshed',
         notifiedCount > 0
@@ -63,9 +68,9 @@ export const DeadlinesSection = ({ currency = '₹', onShowToast, onDeadlinesCha
       );
       onDeadlinesChanged && onDeadlinesChanged();
     } catch (err) {
-      onShowToast && onShowToast('Refresh Failed', err.message || 'Could not refresh deadlines.', 'error');
+      if (mountedRef.current) onShowToast && onShowToast('Refresh Failed', err.message || 'Could not refresh deadlines.', 'error');
     } finally {
-      setIsRunning(false);
+      if (mountedRef.current) setIsRunning(false);
     }
   };
 
@@ -73,12 +78,13 @@ export const DeadlinesSection = ({ currency = '₹', onShowToast, onDeadlinesCha
     setCompletingId(id);
     try {
       await deadlinesApi.complete(id);
+      if (!mountedRef.current) return;
       setItems((prev) => prev.map((d) => (d._id === id ? { ...d, status: 'completed' } : d)));
       onDeadlinesChanged && onDeadlinesChanged();
     } catch (err) {
-      onShowToast && onShowToast('Action Failed', err.message || 'Could not mark this deadline complete.', 'error');
+      if (mountedRef.current) onShowToast && onShowToast('Action Failed', err.message || 'Could not mark this deadline complete.', 'error');
     } finally {
-      setCompletingId(null);
+      if (mountedRef.current) setCompletingId(null);
     }
   };
 

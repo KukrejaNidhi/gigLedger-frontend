@@ -26,6 +26,7 @@ export const AnalyticsPage = ({ currency = '₹', onShowToast, className = '' })
   const [taxSavings, setTaxSavings] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
     setStatus('loading');
     Promise.all([
       dashboardApi.summary(),
@@ -35,6 +36,7 @@ export const AnalyticsPage = ({ currency = '₹', onShowToast, className = '' })
       dashboardApi.taxSavings(),
     ])
       .then(([summaryRes, incomeRes, expenseRes, trendRes, savingsRes]) => {
+        if (cancelled) return;
         setSummary(summaryRes?.data || null);
         setIncomeBySource(incomeRes?.data?.breakdown || []);
         setExpenseByCategory(expenseRes?.data?.breakdown || []);
@@ -43,10 +45,12 @@ export const AnalyticsPage = ({ currency = '₹', onShowToast, className = '' })
         setStatus('ready');
       })
       .catch((err) => {
+        if (cancelled) return;
         console.warn('Failed to load analytics:', err.message);
         onShowToast && onShowToast('Analytics Failed', 'Could not load your dashboard data.', 'error');
         setStatus('error');
       });
+    return () => { cancelled = true; };
   }, []);
 
   if (status === 'loading') {

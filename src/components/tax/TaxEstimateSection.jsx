@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { RefreshCw, Loader2, AlertTriangle, Download } from 'lucide-react';
 import { taxApi, currentTaxPeriod, recentTaxPeriods } from '../../services/taxApi.js';
 
@@ -22,13 +22,21 @@ export const TaxEstimateSection = ({ currency = '₹', onShowToast, className = 
   const [cache, setCache] = useState({}); // period -> estimate data
   const [status, setStatus] = useState({}); // period -> 'loading' | 'ready' | 'error'
 
+  // This call can take 5-30s (real LLM) — guard against the user switching
+  // tabs (unmounting this section) mid-fetch, which would otherwise try to
+  // setState after unmount and log a React warning.
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const fetchEstimate = async (targetPeriod, refresh) => {
     setStatus((prev) => ({ ...prev, [targetPeriod]: 'loading' }));
     try {
       const result = await taxApi.getEstimate({ period: targetPeriod, refresh });
+      if (!mountedRef.current) return;
       setCache((prev) => ({ ...prev, [targetPeriod]: result?.data || null }));
       setStatus((prev) => ({ ...prev, [targetPeriod]: 'ready' }));
     } catch (err) {
+      if (!mountedRef.current) return;
       setStatus((prev) => ({ ...prev, [targetPeriod]: 'error' }));
       onShowToast && onShowToast('Tax Estimate Failed', err.message || 'Could not compute the estimate.', 'error');
     }
@@ -44,7 +52,7 @@ export const TaxEstimateSection = ({ currency = '₹', onShowToast, className = 
   };
 
   // Fire the first fetch for the default period on mount only.
-  React.useEffect(() => {
+  useEffect(() => {
     handleOpenFirstLoad();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -58,9 +66,9 @@ export const TaxEstimateSection = ({ currency = '₹', onShowToast, className = 
     try {
       await taxApi.downloadExport({ period, format });
     } catch (err) {
-      onShowToast && onShowToast('Download Failed', err.message || 'Could not export this estimate.', 'error');
+      if (mountedRef.current) onShowToast && onShowToast('Download Failed', err.message || 'Could not export this estimate.', 'error');
     } finally {
-      setDownloadingFormat(null);
+      if (mountedRef.current) setDownloadingFormat(null);
     }
   };
 

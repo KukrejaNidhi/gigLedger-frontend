@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, Plus, Pencil, Trash2, Loader2, Camera } from 'lucide-react';
 import { transactionsApi } from '../../services/transactionsApi.js';
 import { categoriesApi } from '../../services/categoriesApi.js';
@@ -39,18 +39,25 @@ export const TransactionsPage = ({
   const [deletingId, setDeletingId] = useState(null);
   const [rowBusyId, setRowBusyId] = useState(null);
 
+  // Guards every setState in an async callback against firing after this
+  // component has unmounted (e.g. the user switches tabs mid-fetch) —
+  // avoids the "state update on an unmounted component" console warning.
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const fetchPage = async (pageNum, replace) => {
     setStatus(pageNum === 1 ? 'loading' : 'loading-more');
     try {
       const type = filter === 'all' ? undefined : filter;
       const result = await transactionsApi.list({ type, page: pageNum, limit: PAGE_LIMIT });
+      if (!mountedRef.current) return;
       const { items: newItems = [], totalPages: tp = 1 } = result?.data || {};
       setItems((prev) => (replace ? newItems : [...prev, ...newItems]));
       setTotalPages(tp);
       setPage(pageNum);
       setStatus('ready');
     } catch (err) {
-      setStatus('error');
+      if (mountedRef.current) setStatus('error');
     }
   };
 
@@ -62,6 +69,7 @@ export const TransactionsPage = ({
   useEffect(() => {
     Promise.all([categoriesApi.list({ type: 'income' }), categoriesApi.list({ type: 'expense' })])
       .then(([income, expense]) => {
+        if (!mountedRef.current) return;
         const all = [...(income?.data || []), ...(expense?.data || [])];
         setCategoriesById(Object.fromEntries(all.map((c) => [c._id, c])));
       })
@@ -72,13 +80,14 @@ export const TransactionsPage = ({
     setRowBusyId(id);
     try {
       await transactionsApi.remove(id);
+      if (!mountedRef.current) return;
       setItems((prev) => prev.filter((t) => t._id !== id));
       setDeletingId(null);
       onShowToast && onShowToast('Transaction Deleted', 'Removed from your ledger.', 'info');
     } catch (err) {
-      onShowToast && onShowToast('Delete Failed', err.message || 'Could not delete this transaction.', 'error');
+      if (mountedRef.current) onShowToast && onShowToast('Delete Failed', err.message || 'Could not delete this transaction.', 'error');
     } finally {
-      setRowBusyId(null);
+      if (mountedRef.current) setRowBusyId(null);
     }
   };
 

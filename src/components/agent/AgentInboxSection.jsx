@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Sparkles, Check, X, Loader2, CalendarClock } from 'lucide-react';
 import { agentApi } from '../../services/agentApi.js';
 import { categoriesApi } from '../../services/categoriesApi.js';
@@ -24,13 +24,17 @@ export const AgentInboxSection = ({ onShowToast, className = '' }) => {
   const [resolvingId, setResolvingId] = useState(null);
   const [categoriesById, setCategoriesById] = useState({});
 
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
   const fetchTasks = async () => {
     try {
       const result = await agentApi.listTasks({ status: 'proposed' });
+      if (!mountedRef.current) return;
       setTasks(result?.data?.items || []);
       setStatus('ready');
     } catch (err) {
-      setStatus('error');
+      if (mountedRef.current) setStatus('error');
     }
   };
 
@@ -38,6 +42,7 @@ export const AgentInboxSection = ({ onShowToast, className = '' }) => {
     fetchTasks();
     Promise.all([categoriesApi.list({ type: 'income' }), categoriesApi.list({ type: 'expense' })])
       .then(([income, expense]) => {
+        if (!mountedRef.current) return;
         const all = [...(income?.data || []), ...(expense?.data || [])];
         setCategoriesById(Object.fromEntries(all.map((c) => [c._id, c])));
       })
@@ -49,16 +54,17 @@ export const AgentInboxSection = ({ onShowToast, className = '' }) => {
     try {
       const result = await agentApi.run();
       const count = result?.data?.count || 0;
+      await fetchTasks();
+      if (!mountedRef.current) return;
       onShowToast && onShowToast(
         'Categorization Complete',
         count > 0 ? `${count} new suggestion${count === 1 ? '' : 's'} ready for review.` : 'Nothing new to categorize right now.',
         'success'
       );
-      await fetchTasks();
     } catch (err) {
-      onShowToast && onShowToast('Categorization Failed', err.message || 'Could not run the categorization agent.', 'error');
+      if (mountedRef.current) onShowToast && onShowToast('Categorization Failed', err.message || 'Could not run the categorization agent.', 'error');
     } finally {
-      setIsRunning(false);
+      if (mountedRef.current) setIsRunning(false);
     }
   };
 
@@ -67,11 +73,12 @@ export const AgentInboxSection = ({ onShowToast, className = '' }) => {
     try {
       if (action === 'approve') await agentApi.approveTask(task._id);
       else await agentApi.rejectTask(task._id);
+      if (!mountedRef.current) return;
       setTasks((prev) => prev.filter((t) => t._id !== task._id));
     } catch (err) {
-      onShowToast && onShowToast('Action Failed', err.message || 'Could not resolve this suggestion.', 'error');
+      if (mountedRef.current) onShowToast && onShowToast('Action Failed', err.message || 'Could not resolve this suggestion.', 'error');
     } finally {
-      setResolvingId(null);
+      if (mountedRef.current) setResolvingId(null);
     }
   };
 
