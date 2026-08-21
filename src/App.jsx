@@ -268,8 +268,7 @@ export default function App() {
                   onShowToast={showToast}
                   onOpenDiffModal={() => setIsDiffOpen(true)}
                   currency="₹"
-                  isQuickAddOpen={isQuickAddOpen}
-                  onCloseQuickAdd={() => setIsQuickAddOpen(false)}
+                  refreshTick={transactionsRefreshTick}
                   onSeeAllTransactions={() => setActiveTab('transactions')}
                 />
               )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PastelWaveMetricCards } from './PastelWaveMetricCards.jsx';
 import { CashFlowCard } from './CashFlowCard.jsx';
 import { HabitTrophyBanner } from './HabitTrophyBanner.jsx';
@@ -7,136 +7,87 @@ import { AgentActionCard } from './AgentActionCard.jsx';
 import { FinancialInsightsList } from './FinancialInsightsList.jsx';
 import { MakeItYoursChecklist } from './MakeItYoursChecklist.jsx';
 import { RecentTransactionsList } from './RecentTransactionsList.jsx';
-import { BudgetSectionCard } from './BudgetSectionCard.jsx';
-import { ScheduledBillsCard } from './ScheduledBillsCard.jsx';
-import { QuickAddModal } from './QuickAddModal.jsx';
+import { transactionsApi } from '../../services/transactionsApi.js';
+import { categoriesApi } from '../../services/categoriesApi.js';
+import { sumByTimeframe } from '../../utils/timeframeRange.js';
 
 /**
  * Mobile App Home Content View
  * Structure:
  * 1. Dual Sparkline Line Chart Cards (Gross Inflow & Tax Reserve)
- * 2. Cash Flow Summary Card (SPENDING - vs INCOME + with Net Balance)
+ * 2. Cash Flow Summary Card (SPENDING - vs INCOME + with Net Balance), filtered
+ *    by the selected timeframe against real transaction dates
  * 3. Habit Milestone Banner
  * 4. Net Safe-to-Spend Liquidity Buffer with Multi-Segment Progress Bar
  * 5. Agent Action Pending Card (DIFF preview)
  * 6. Financial Insights (Net Inflow & Tax Reserve Ratio)
  * 7. Make It Yours Setup Checklist
- * 8. Recent Transactions List (Uber, Zomato, Swiggy, Apple, Shell thumbnails)
- * 9. Budgets & Scheduled Sections
- * 10. Quick Add FAB Modal
+ * 8. Recent Transactions List (branded thumbnails), live from the backend
  */
 export const HomePage = ({
   user,
   onShowToast,
   onOpenDiffModal,
   currency = '₹',
-  isQuickAddOpen = false,
-  onCloseQuickAdd,
+  refreshTick = 0,
   onSeeAllTransactions,
   className = '',
 }) => {
-  // Cash Flow & Transaction State with Real Branded Entries in Rupees
-  const [transactions, setTransactions] = useState([
-    {
-      id: 'tx-1',
-      title: 'Uber Driver Payout',
-      brand: 'uber',
-      icon: 'uber',
-      category: 'Ride / Inflow',
-      method: 'Direct Deposit',
-      amount: 1450.00,
-      isIncome: true,
-      date: 'Today, 2:30 PM',
-    },
-    {
-      id: 'tx-2',
-      title: 'Zomato Dinner Order',
-      brand: 'zomato',
-      icon: 'zomato',
-      category: 'Food & Dining',
-      method: 'UPI',
-      amount: 340.00,
-      isIncome: false,
-      date: 'Today, 1:15 PM',
-    },
-    {
-      id: 'tx-3',
-      title: 'Swiggy Instamart',
-      brand: 'swiggy',
-      icon: 'swiggy',
-      category: 'Groceries',
-      method: 'Card',
-      amount: 180.00,
-      isIncome: false,
-      date: 'Yesterday',
-    },
-    {
-      id: 'tx-4',
-      title: 'Monthly Earnings Payout',
-      brand: 'salary',
-      icon: 'salary',
-      category: 'Salary',
-      method: 'Bank Wire',
-      amount: 5000.00,
-      isIncome: true,
-      date: 'Aug 18',
-    },
-    {
-      id: 'tx-5',
-      title: 'Apple iCloud Services',
-      brand: 'apple',
-      icon: 'apple',
-      category: 'Cloud Storage',
-      method: 'Card',
-      amount: 75.00,
-      isIncome: false,
-      date: 'Aug 16',
-    },
-  ]);
+  const [transactions, setTransactions] = useState([]);
+  const [categoriesById, setCategoriesById] = useState({});
+  const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [selectedTimeframe, setSelectedTimeframe] = useState('This Month');
 
-  const totalSpending = transactions
-    .filter((t) => !t.isIncome)
-    .reduce((acc, curr) => acc + curr.amount, 0);
+  useEffect(() => {
+    let cancelled = false;
+    setStatus('loading');
+    transactionsApi.listAll()
+      .then((items) => {
+        if (!cancelled) {
+          setTransactions(items);
+          setStatus('ready');
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to load transactions:', err.message);
+        if (!cancelled) setStatus('error');
+      });
+    return () => { cancelled = true; };
+  }, [refreshTick]);
 
-  const totalIncome = transactions
-    .filter((t) => t.isIncome)
-    .reduce((acc, curr) => acc + curr.amount, 0);
+  useEffect(() => {
+    Promise.all([categoriesApi.list({ type: 'income' }), categoriesApi.list({ type: 'expense' })])
+      .then(([income, expense]) => {
+        const all = [...(income?.data || []), ...(expense?.data || [])];
+        setCategoriesById(Object.fromEntries(all.map((c) => [c._id, c])));
+      })
+      .catch((err) => console.warn('Failed to load categories:', err.message));
+  }, []);
 
-  const handleAddTransaction = (newTx) => {
-    setTransactions((prev) => [newTx, ...prev]);
-    if (onShowToast) {
-      const sign = newTx.isIncome ? '+' : '-';
-      onShowToast(
-        newTx.isIncome ? 'Income Recorded' : 'Spending Recorded',
-        `${newTx.title}: ${sign}${currency}${newTx.amount.toFixed(2)} added to ledger.`,
-        'success'
-      );
-    }
-  };
+  const { spending: totalSpending, income: totalIncome } = sumByTimeframe(transactions, selectedTimeframe);
+
+  const recentTransactions = [...transactions]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 10)
+    .map((tx) => ({
+      id: tx._id,
+      title: tx.rawDescription || (tx.type === 'income' ? 'Income' : 'Expense'),
+      brand: tx.source,
+      source: tx.source,
+      rawDescription: tx.rawDescription,
+      category: tx.category ? categoriesById[tx.category]?.name || 'Categorized' : 'Uncategorized',
+      method: tx.source && tx.source !== 'manual' ? tx.source : 'Manual Entry',
+      amount: Number(tx.amount) || 0,
+      isIncome: tx.type === 'income',
+      type: tx.type,
+      date: new Date(tx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+    }));
 
   const handleReviewProposal = () => {
     if (onOpenDiffModal) {
       onOpenDiffModal();
     } else if (onShowToast) {
       onShowToast('Agent Tax Proposal', 'Reviewing Shell ₹350.00 expense deduction proposal.', 'info');
-    }
-  };
-
-  const handleViewHabit = () => {
-    if (onShowToast) {
-      onShowToast('Habit Milestone', 'You logged 5 transactions this week. Keep your ledger accurate!', 'success');
-    }
-  };
-
-  const handleSetBudget = () => {
-    if (onShowToast) {
-      onShowToast('Budget Created', `Monthly spending limit set to ${currency}25,000.00 with 23% tax vault reserve.`, 'success');
-    }
-  };
-
-  const handleScheduleItem = () => {
-    if (onShowToast) {
-      onShowToast('Schedule Alert', 'Weekly recurring earnings check scheduled for every Monday.', 'info');
     }
   };
 
@@ -150,14 +101,20 @@ export const HomePage = ({
         currency={currency}
       />
 
-      {/* 2. CASH FLOW OVERVIEW CARD */}
+      {/* 2. CASH FLOW OVERVIEW CARD — filtered by selectedTimeframe against real transaction dates */}
       <CashFlowCard
         spending={totalSpending}
         income={totalIncome}
         currency={currency}
-        onTimeframeChange={(tf) => onShowToast && onShowToast('Timeframe Filter', `Filtered Cash Flow by ${tf}`, 'info')}
+        selectedTimeframe={selectedTimeframe}
+        onTimeframeChange={setSelectedTimeframe}
       />
 
+      {status === 'error' && (
+        <div className="text-[11px] font-semibold text-rose-500 bg-rose-500/10 rounded-2xl px-4 py-3">
+          Couldn't load your transactions. Pull to refresh or try again shortly.
+        </div>
+      )}
 
       {/* 4. NET SAFE-TO-SPEND LIQUIDITY BUFFER CARD */}
       <LiquidityBufferCard
@@ -185,10 +142,9 @@ export const HomePage = ({
         currency={currency}
       />
 
-
-      {/* 8. RECENT TRANSACTIONS (WITH UBER, ZOMATO, SWIGGY, ETC. THUMBNAILS) */}
+      {/* 8. RECENT TRANSACTIONS (branded thumbnails), live from the backend */}
       <RecentTransactionsList
-        transactions={transactions}
+        transactions={recentTransactions}
         currency={currency}
         onTransactionClick={(tx) => onShowToast && onShowToast('Transaction Details', `${tx.title} · ${tx.isIncome ? '+' : '-'}${currency}${tx.amount.toFixed(2)}`, 'info')}
         onSeeAllClick={onSeeAllTransactions}

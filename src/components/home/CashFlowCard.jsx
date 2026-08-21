@@ -14,10 +14,10 @@ export const CashFlowCard = ({
   spending = 1000.0,
   income = 5000.0,
   currency = '₹',
+  selectedTimeframe = 'This Month', // controlled: the parent owns which period is selected and (re)computes spending/income for it
   onTimeframeChange,
   className = '',
 }) => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState('This Month');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showNetHelp, setShowNetHelp] = useState(false);
   const dropdownRef = useRef(null);
@@ -27,7 +27,6 @@ export const CashFlowCard = ({
   const netBalance = income - spending;
 
   const handleSelectTimeframe = (tf) => {
-    setSelectedTimeframe(tf);
     setIsDropdownOpen(false);
     if (onTimeframeChange) onTimeframeChange(tf);
   };
@@ -52,8 +51,18 @@ export const CashFlowCard = ({
         <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/5 dark:bg-sky-500/10 rounded-full blur-2xl"></div>
       </div>
 
-      {/* 1. TOP HEADER: "CASH FLOW" & TIMEFRAME DROPDOWN */}
-      <div className="flex items-center justify-between relative z-10">
+      {/* Scrim behind the open dropdown — the menu is absolutely positioned
+          and would otherwise float directly on top of the Income figure /
+          Net Balance bar below it without this, reading as a layout bug
+          rather than an intentional overlay */}
+      {isDropdownOpen && (
+        <div className="absolute inset-0 rounded-3xl bg-white/70 dark:bg-[#161B22]/80 backdrop-blur-[1px] z-20"></div>
+      )}
+
+      {/* 1. TOP HEADER: "CASH FLOW" & TIMEFRAME DROPDOWN — z-25 so the button/
+          dropdown stay above the scrim (z-20) even while it's dimming the
+          rest of the card */}
+      <div className="flex items-center justify-between relative z-[25]">
         <div className="flex items-center gap-2">
           <h2 className="text-xs font-mono font-bold tracking-wider uppercase text-slate-400 dark:text-slate-400">
             CASH FLOW
