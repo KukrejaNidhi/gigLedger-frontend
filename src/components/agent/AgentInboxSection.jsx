@@ -25,7 +25,13 @@ export const AgentInboxSection = ({ onShowToast, className = '' }) => {
   const [categoriesById, setCategoriesById] = useState({});
 
   const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    mountedRef.current = true; // reset on every effect run — StrictMode dev double-invoke
+    // simulates a mount->unmount->mount, and the cleanup below would otherwise
+    // leave this permanently false after the first pass, silently swallowing
+    // every real setState call for the rest of the component's life.
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const fetchTasks = async () => {
     try {

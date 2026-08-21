@@ -43,7 +43,13 @@ export const TransactionsPage = ({
   // component has unmounted (e.g. the user switches tabs mid-fetch) —
   // avoids the "state update on an unmounted component" console warning.
   const mountedRef = useRef(true);
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    mountedRef.current = true; // reset on every effect run — StrictMode dev double-invoke
+    // simulates a mount->unmount->mount, and the cleanup below would otherwise
+    // leave this permanently false after the first pass, silently swallowing
+    // every real setState call for the rest of the component's life.
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const fetchPage = async (pageNum, replace) => {
     setStatus(pageNum === 1 ? 'loading' : 'loading-more');
