@@ -92,7 +92,7 @@ export const AnalyticsPage = ({ currency = '₹', onShowToast, className = '' })
     <div className={`space-y-4 animate-fadeIn ${className}`}>
       <div className="flex items-center justify-between py-1">
         <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Financial Overview</span>
-        <span className="text-[11px] font-mono font-bold text-slate-900 dark:text-white bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800/50">
+        <span className="text-[11px] font-mono font-bold text-slate-900 dark:text-white bg-sky-50 dark:bg-sky-950/60 px-2.5 py-0.5 rounded-3xl border border-sky-200 dark:border-sky-800/50">
           {summary?.period || 'This Month'}
         </span>
       </div>

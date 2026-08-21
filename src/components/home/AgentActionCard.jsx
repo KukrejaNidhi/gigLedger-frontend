@@ -21,13 +21,13 @@ export const AgentActionCard = ({
   return (
     <div
       onClick={onReviewClick}
-      className={`w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-4 shadow-sm hover:shadow-md hover:border-sky-400 dark:hover:border-sky-500 transition-all cursor-pointer group select-none flex items-center justify-between gap-3 ${className}`}
+      className={`w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-4 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer group select-none flex items-center justify-between gap-3 ${className}`}
     >
       {/* LEFT: Icon & Details */}
       <div className="flex items-center gap-3">
-        {/* Squircle Lightning Bolt */}
-        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/40 flex items-center justify-center text-amber-500 dark:text-amber-400 flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-          <Zap className="w-5 h-5 sm:w-6 sm:h-6 fill-amber-400/20" />
+        {/* Squircle Lightning Bolt (neutral) */}
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+          <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
 
         {/* Text Details */}
@@ -36,7 +36,7 @@ export const AgentActionCard = ({
             <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
               {title}
             </span>
-            <span className="px-1.5 py-0.5 rounded-md bg-rose-500 text-white text-[10px] font-black tracking-wide font-mono shadow-2xs">
+            <span className="px-1.5 py-0.5 rounded-md bg-slate-700 dark:bg-slate-600 text-white text-[10px] font-black tracking-wide font-mono shadow-2xs">
               {badgeText}
             </span>
           </div>
@@ -47,7 +47,7 @@ export const AgentActionCard = ({
       </div>
 
       {/* RIGHT: Review Action Link */}
-      <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition flex-shrink-0">
+      <div className="flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-900 dark:text-white transition flex-shrink-0">
         <span>Review</span>
         <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
       </div>

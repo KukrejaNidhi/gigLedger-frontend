@@ -1,6 +1,5 @@
 export * from './HomeHeader.jsx';
 export * from './CashFlowCard.jsx';
-export * from './PastelWaveMetricCards.jsx';
 export * from './LiquidityBufferCard.jsx';
 export * from './AgentActionCard.jsx';
 export * from './FinancialInsightsList.jsx';

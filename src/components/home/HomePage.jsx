@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { PastelWaveMetricCards } from './PastelWaveMetricCards.jsx';
 import { CashFlowCard } from './CashFlowCard.jsx';
 import { HabitTrophyBanner } from './HabitTrophyBanner.jsx';
 import { LiquidityBufferCard } from './LiquidityBufferCard.jsx';
@@ -14,15 +13,18 @@ import { sumByTimeframe } from '../../utils/timeframeRange.js';
 /**
  * Mobile App Home Content View
  * Structure:
- * 1. Dual Sparkline Line Chart Cards (Gross Inflow & Tax Reserve)
- * 2. Cash Flow Summary Card (SPENDING - vs INCOME + with Net Balance), filtered
+ * 1. Cash Flow Summary Card (SPENDING - vs INCOME + with Net Balance), filtered
  *    by the selected timeframe against real transaction dates
- * 3. Habit Milestone Banner
- * 4. Net Safe-to-Spend Liquidity Buffer with Multi-Segment Progress Bar
- * 5. Agent Action Pending Card (DIFF preview)
- * 6. Financial Insights (Net Inflow & Tax Reserve Ratio)
- * 7. Make It Yours Setup Checklist
- * 8. Recent Transactions List (branded thumbnails), live from the backend
+ * 2. Net Safe-to-Spend Liquidity Buffer with Multi-Segment Progress Bar
+ * 3. Agent Action Pending Card (DIFF preview)
+ * 4. Financial Insights (Net Inflow & Tax Reserve Ratio)
+ * 5. Recent Transactions List (branded thumbnails), live from the backend
+ *
+ * Dropped the old "Gross Inflow / Tax Reserve" sparkline cards
+ * (PastelWaveMetricCards) — both their headline numbers and their trend
+ * badges/sparkline curves were 100% hardcoded with no real data source, and
+ * "Gross Inflow" duplicated what CashFlowCard's Income column already shows
+ * live.
  */
 export const HomePage = ({
   user,
@@ -93,13 +95,6 @@ export const HomePage = ({
 
   return (
     <div className={`w-full space-y-4 sm:space-y-4.5 animate-fadeIn ${className}`}>
-
-      {/* 1. DUAL SPARKLINE LINE CHART CARDS (Gross Inflow & Tax Reserve) */}
-      <PastelWaveMetricCards
-        grossInflow={52000}
-        taxReserve={11200}
-        currency={currency}
-      />
 
       {/* 2. CASH FLOW OVERVIEW CARD — filtered by selectedTimeframe against real transaction dates */}
       <CashFlowCard

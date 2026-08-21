@@ -7,9 +7,16 @@ import { BrandThumbnail } from './BrandThumbnail.jsx';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
-  { id: 'income', label: 'Income' },
-  { id: 'expense', label: 'Expense' },
+  { id: 'categorized', label: 'Approved' },
+  { id: 'pending', label: 'Pending' },
 ];
+
+const STATUS_BADGE = {
+  categorized: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400',
+  reconciled: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400',
+  pending: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400',
+};
+const STATUS_LABEL = { categorized: 'Approved', reconciled: 'Approved', pending: 'Pending' };
 
 const PAGE_LIMIT = 20;
 
@@ -54,8 +61,8 @@ export const TransactionsPage = ({
   const fetchPage = async (pageNum, replace) => {
     setStatus(pageNum === 1 ? 'loading' : 'loading-more');
     try {
-      const type = filter === 'all' ? undefined : filter;
-      const result = await transactionsApi.list({ type, page: pageNum, limit: PAGE_LIMIT });
+      const txStatus = filter === 'all' ? undefined : filter;
+      const result = await transactionsApi.list({ status: txStatus, page: pageNum, limit: PAGE_LIMIT });
       if (!mountedRef.current) return;
       const { items: newItems = [], totalPages: tp = 1 } = result?.data || {};
       setItems((prev) => (replace ? newItems : [...prev, ...newItems]));
@@ -163,7 +170,7 @@ export const TransactionsPage = ({
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-16 text-slate-400 text-xs">
-          No {filter === 'all' ? '' : filter} transactions yet. Tap "Add" to log one.
+          No {filter === 'all' ? '' : STATUS_LABEL[filter]?.toLowerCase() + ' '}transactions yet. Tap "Add" to log one.
         </div>
       ) : (
         <div className="w-full rounded-3xl bg-white dark:bg-[#161B22] border border-slate-200/80 dark:border-[#30363D] p-2.5 sm:p-3.5 divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -203,6 +210,9 @@ export const TransactionsPage = ({
                       <span>·</span>
                       <span className="capitalize">
                         {tx.category ? categoriesById[tx.category]?.name || 'Categorized' : 'Uncategorized'}
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide ${STATUS_BADGE[tx.status] || STATUS_BADGE.pending}`}>
+                        {STATUS_LABEL[tx.status] || 'Pending'}
                       </span>
                     </span>
                   </div>
