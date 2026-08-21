@@ -38,6 +38,6 @@ export function buildCategoryBreakdown(transactions, categories) {
     name: row.name,
     total: row.total,
     percent: Math.round((row.total / grandTotal) * 100),
-    variant: row.id === 'uncategorized' || row.id === 'other' ? 'neutral' : VARIANT_ORDER[idx % VARIANT_ORDER.length],
+    variant: row.id === 'uncategorized' || row.id === 'other' ? 'muted' : VARIANT_ORDER[idx % VARIANT_ORDER.length],
   }));
 }

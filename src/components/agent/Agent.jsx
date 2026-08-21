@@ -85,7 +85,7 @@ export const DiffInspectorModal = ({
           </div>
           <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-2xs">
             <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Tax After (Saved)</div>
-            <div className="font-mono text-emerald-700 dark:text-emerald-300 font-extrabold text-sm mt-0.5">{afterTax} <span className="text-[11px]">(-{taxSaved})</span></div>
+            <div className="font-mono text-slate-900 dark:text-white font-extrabold text-sm mt-0.5">{afterTax} <span className="text-[11px]">(-{taxSaved})</span></div>
           </div>
         </div>
 

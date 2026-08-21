@@ -9,13 +9,11 @@ export const TaxLiabilityCard = ({
   className = '',
   ...rest
 }) => {
-  const v = VARIANT_MAP[variant] || VARIANT_MAP.default;
-
   return (
     <div className={`w-full bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-sm hover:shadow-md transition-all ${className}`} {...rest}>
       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{quarterLabel}</span>
-      <div className={`text-3xl font-extrabold font-mono ${v.text}`}>{liabilityAmount}</div>
-      <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">{fundedPercentage}% Protected in Tax Vault</div>
+      <div className="text-3xl font-extrabold font-mono text-slate-900 dark:text-white">{liabilityAmount}</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{fundedPercentage}% Protected in Tax Vault</div>
     </div>
   );
 };
@@ -41,7 +39,7 @@ export const RAGAuthorityDrawer = ({
       </p>
       <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono pt-0.5">
         <span>Source: {sourceUrl}</span>
-        <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Grounded</span>
+        <span className="text-slate-900 dark:text-white font-bold">100% Grounded</span>
       </div>
     </div>
   );

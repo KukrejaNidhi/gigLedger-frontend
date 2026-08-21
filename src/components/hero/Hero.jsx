@@ -40,7 +40,7 @@ export const HeroCommandHeader = ({
       <div className="text-center py-1">
         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{balanceLabel}</span>
         <div className="text-3xl font-extrabold font-mono text-slate-900 dark:text-white mt-0.5">{balance}</div>
-        <div className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
+        <div className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-slate-900 dark:text-white text-[10px] font-mono font-bold">
           {deltaText}
         </div>
       </div>
@@ -64,12 +64,11 @@ export const MetricBentoGrid = ({
   return (
     <div className={`grid ${colClass} gap-2.5 w-full ${className}`} {...rest}>
       {metrics.map((m, idx) => {
-        const v = VARIANT_MAP[m.variant || 'neutral'] || VARIANT_MAP.default;
         return (
           <div key={idx} className="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-sm hover:shadow-md transition-all">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{m.label}</span>
             <div className="text-base font-extrabold font-mono text-slate-900 dark:text-white">{m.value}</div>
-            {m.subLabel && <div className={`text-[10px] ${v.text}`}>{m.subLabel}</div>}
+            {m.subLabel && <div className="text-[10px] text-slate-500 dark:text-slate-400">{m.subLabel}</div>}
           </div>
         );
       })}
@@ -87,7 +86,7 @@ export const LiquidityBufferBadge = ({
   const v = VARIANT_MAP[variant] || VARIANT_MAP.default;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl ${v.bgSubtle} border ${v.border} ${v.text} text-[11px] font-mono font-bold ${className}`} {...rest}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl ${v.bgSubtle} border ${v.border} text-slate-900 dark:text-white text-[11px] font-mono font-bold ${className}`} {...rest}>
       <span className={`w-2 h-2 rounded-full ${v.bg}`}></span>
       <span>{percentage}% {label}</span>
     </span>

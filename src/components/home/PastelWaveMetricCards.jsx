@@ -30,14 +30,14 @@ export const PastelWaveMetricCards = ({
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Gross Inflow
             </span>
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-sky-600 dark:text-sky-400 bg-sky-100/80 dark:bg-sky-950/70 px-1.5 py-0.5 rounded-full border border-sky-200/60 dark:border-sky-800/40 font-mono">
+            <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-slate-900 dark:text-white bg-sky-100/80 dark:bg-sky-950/70 px-1.5 py-0.5 rounded-full border border-sky-200/60 dark:border-sky-800/40 font-mono">
               <ArrowUpRight className="w-3 h-3" />
               <span>+12.4%</span>
             </span>
           </div>
 
           <div className="flex items-baseline gap-1 text-2xl sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
-            <span className="text-emerald-500 font-sans text-xl font-bold">+</span>
+            <span className="font-sans text-xl font-bold">+</span>
             <span>{currency}{grossInflow.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
           </div>
         </div>
@@ -97,7 +97,7 @@ export const PastelWaveMetricCards = ({
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Tax Reserve
             </span>
-            <span className="inline-flex items-center text-[10px] font-extrabold text-amber-700 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-950/70 px-1.5 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/40 font-mono">
+            <span className="inline-flex items-center text-[10px] font-extrabold text-slate-900 dark:text-white bg-amber-100/80 dark:bg-amber-950/70 px-1.5 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/40 font-mono">
               23% Safe
             </span>
           </div>

@@ -99,7 +99,7 @@ export const CashFlowCard = ({
               INCOME
             </span>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-emerald-600 dark:text-emerald-400 flex items-baseline">
+          <div className="text-2xl sm:text-3xl font-extrabold font-mono tracking-tight text-slate-900 dark:text-white flex items-baseline">
             <span>+{currency}{Math.abs(income).toFixed(2)}</span>
           </div>
         </div>
@@ -118,11 +118,7 @@ export const CashFlowCard = ({
           </span>
         </div>
 
-        <div className={`text-base sm:text-lg font-mono font-extrabold tracking-tight ${
-          netBalance >= 0 
-            ? 'text-emerald-600 dark:text-emerald-400' 
-            : 'text-rose-600 dark:text-rose-400'
-        }`}>
+        <div className="text-base sm:text-lg font-mono font-extrabold tracking-tight text-slate-900 dark:text-white">
           {netBalance >= 0 ? `+${currency}${netBalance.toFixed(2)}` : `-${currency}${Math.abs(netBalance).toFixed(2)}`}
         </div>
       </div>

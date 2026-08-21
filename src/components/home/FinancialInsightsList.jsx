@@ -49,7 +49,7 @@ export const FinancialInsightsList = ({
           </div>
 
           {/* Amount with explicit + */}
-          <div className="text-xs sm:text-sm font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+          <div className="text-xs sm:text-sm font-extrabold font-mono text-slate-900 dark:text-white">
             +{currency}{netInflow.toFixed(2)}
           </div>
         </div>

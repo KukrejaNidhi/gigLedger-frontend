@@ -76,7 +76,7 @@ export const TorusHaloDial = ({
     <div className={`w-full bg-white dark:bg-[#161B22] p-5 rounded-3xl border border-slate-200/80 dark:border-[#30363D] shadow-sm hover:shadow-md transition-all space-y-3 ${className}`} {...rest}>
       <div className="flex justify-between items-center">
         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Safe to Spend</span>
-        <span className={`text-xs font-bold font-mono ${v.text}`}>+12% this week</span>
+        <span className="text-xs font-bold font-mono text-slate-900 dark:text-white">+12% this week</span>
       </div>
 
       <div className="flex items-center justify-between gap-4 py-1">
@@ -111,7 +111,7 @@ export const TorusHaloDial = ({
             <span className="text-slate-400 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-500"></span> Tax Saved
             </span>
-            <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{taxVaultAmount}</span>
+            <span className="font-mono font-bold text-slate-900 dark:text-white">{taxVaultAmount}</span>
           </div>
         </div>
       </div>
@@ -139,7 +139,7 @@ export const SegmentedLiquiditySlider = ({
         </div>
         <div className="text-right">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Safe Cash</span>
-          <div className={`text-xs font-mono font-bold ${v.text} mt-0.5`}>{safePercent}% Available</div>
+          <div className="text-xs font-mono font-bold text-slate-900 dark:text-white mt-0.5">{safePercent}% Available</div>
         </div>
       </div>
 
@@ -174,7 +174,7 @@ export const PastelWaveCard = ({
     <div className={`w-full ${v.bgSubtle} p-5 rounded-3xl border ${v.border} shadow-sm hover:shadow-md transition-all space-y-2.5 ${className}`} {...rest}>
       <div className="flex justify-between items-center">
         <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{title}</span>
-        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${isNegative ? 'bg-rose-100 text-rose-600' : 'bg-sky-100 text-sky-600'}`}>{trend}</span>
+        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full text-slate-900 ${isNegative ? 'bg-rose-100' : 'bg-sky-100'}`}>{trend}</span>
       </div>
       <div className="text-2xl font-extrabold font-mono text-slate-900 dark:text-white">{amount}</div>
       <div className="pt-1">
@@ -209,12 +209,11 @@ export const MultiPlatformDonutGauge = ({
       </div>
       <div className="grid grid-cols-2 gap-3">
         {shares.map((share, idx) => {
-          const v = VARIANT_MAP[share.variant] || VARIANT_MAP.default;
           return (
             <div key={idx} className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/40 space-y-1">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{share.name}</span>
-                <span className={`text-[10px] font-mono font-bold ${v.text}`}>{share.percent}%</span>
+                <span className="text-[10px] font-mono font-bold text-slate-900 dark:text-white">{share.percent}%</span>
               </div>
               <div className="text-base font-extrabold font-mono text-slate-900 dark:text-white">{share.amount}</div>
             </div>
@@ -249,7 +248,7 @@ export const QuarterlyHorizonTimeline = ({
         <div className={`flex items-center justify-between p-3.5 ${v.bgSubtle} rounded-2xl border ${v.border}`}>
           <div>
             <div className="font-bold text-slate-900 dark:text-white">{activeQuarter} ({dueDate})</div>
-            <div className={`text-[11px] font-mono ${v.text} mt-0.5`}>Saved in Account: {reserveReady}</div>
+            <div className="text-[11px] font-mono text-slate-900 dark:text-white mt-0.5">Saved in Account: {reserveReady}</div>
           </div>
           <span className={`px-2.5 py-1 rounded-xl ${v.bg} text-slate-950 text-[10px] font-bold uppercase`}>Upcoming</span>
         </div>
@@ -269,23 +268,21 @@ export const TaxWaterfallFlow = ({
   className = '',
   ...rest
 }) => {
-  const v = VARIANT_MAP[variant] || VARIANT_MAP.default;
-
   return (
     <div className={`w-full bg-white dark:bg-[#161B22] p-5 rounded-3xl border border-slate-200/80 dark:border-[#30363D] space-y-3 text-xs shadow-sm hover:shadow-md transition-all ${className}`} {...rest}>
       <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Tax Calculation Breakdown</div>
       <div className="flex justify-between items-center text-slate-500">
         <span>Total Earnings</span>
-        <span className="font-mono text-emerald-600 font-bold">{grossInflow}</span>
+        <span className="font-mono text-slate-900 dark:text-white font-bold">{grossInflow}</span>
       </div>
       <div className="flex justify-between items-center text-slate-500">
         <span>Fuel & Mileage Expenses (Tax-Free)</span>
-        <span className="font-mono text-rose-500 font-bold">{deductions}</span>
+        <span className="font-mono text-slate-900 dark:text-white font-bold">{deductions}</span>
       </div>
       <div className="h-px bg-slate-100 dark:bg-slate-800 my-1.5"></div>
       <div className="flex justify-between items-center font-bold text-slate-900 dark:text-white">
         <span>Taxable Net Profit</span>
-        <span className="font-mono text-sky-500">{netScheduleC}</span>
+        <span className="font-mono text-slate-900 dark:text-white">{netScheduleC}</span>
       </div>
       <div className="flex justify-between items-center text-[11px] text-slate-400">
         <span>Estimated Advance Tax (~17%)</span>
@@ -294,7 +291,7 @@ export const TaxWaterfallFlow = ({
       <div className="h-px bg-slate-100 dark:bg-slate-800 my-1.5"></div>
       <div className="flex justify-between items-center font-extrabold text-sm text-slate-900 dark:text-white">
         <span>Recommended Tax Savings</span>
-        <span className={`font-mono ${v.text}`}>{totalReserve}</span>
+        <span className="font-mono text-slate-900 dark:text-white">{totalReserve}</span>
       </div>
     </div>
   );

@@ -72,6 +72,19 @@ export const VARIANT_MAP = {
     fill: '#0F172A',
     stroke: '#334155',
   },
+  // For "no data" / catch-all chart slices (Uncategorized, Other) — a light,
+  // clearly muted gray, distinct from `neutral`'s near-black fill which reads
+  // as a full dark slice rather than an empty one.
+  muted: {
+    bg: 'bg-slate-300 dark:bg-slate-600',
+    bgSubtle: 'bg-slate-50 dark:bg-slate-900',
+    text: 'text-slate-500 dark:text-slate-400',
+    border: 'border-slate-200 dark:border-slate-700',
+    ring: 'ring-slate-300/40',
+    badge: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    fill: '#CBD5E1',
+    stroke: '#94A3B8',
+  },
   default: {
     bg: 'bg-sky-500',
     bgSubtle: 'bg-sky-50 dark:bg-sky-950/40',

@@ -129,11 +129,7 @@ export const RecentTransactionsList = ({
 
             {/* RIGHT: Amount with + or - and Date */}
             <div className="flex flex-col items-end">
-              <span className={`text-xs sm:text-sm font-extrabold font-mono flex items-center gap-0.5 ${
-                tx.isIncome
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-slate-900 dark:text-slate-100'
-              }`}>
+              <span className="text-xs sm:text-sm font-extrabold font-mono flex items-center gap-0.5 text-slate-900 dark:text-white">
                 {tx.isIncome ? (
                   <>
                     <span>+</span>

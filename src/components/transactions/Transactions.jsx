@@ -73,7 +73,7 @@ export const TransactionItemRow = ({
           <div className="text-[10px] text-slate-400">{categoryText}</div>
         </div>
       </div>
-      <span className={`text-xs font-extrabold font-mono ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`}>
+      <span className="text-xs font-extrabold font-mono text-slate-900 dark:text-white">
         {amount}
       </span>
     </div>
@@ -118,16 +118,16 @@ export const FeeBreakdownPopover = ({
         </div>
         <div className="flex justify-between text-slate-500">
           <span>Platform Service Fees (17%)</span>
-          <span className="font-mono text-rose-500 font-bold">{platformCut}</span>
+          <span className="font-mono text-slate-900 dark:text-white font-bold">{platformCut}</span>
         </div>
         <div className="h-px bg-slate-100 dark:bg-slate-800 my-0.5"></div>
         <div className="flex justify-between font-bold text-slate-900 dark:text-white">
           <span>Net Deposited</span>
-          <span className="font-mono text-emerald-600">{netDeposited}</span>
+          <span className="font-mono text-slate-900 dark:text-white">{netDeposited}</span>
         </div>
         <div className="flex justify-between text-[10px] text-slate-400">
           <span>Suggested Tax Set-Aside (23%)</span>
-          <span className="font-mono text-yellow-600 font-bold">{taxHold}</span>
+          <span className="font-mono text-slate-900 dark:text-white font-bold">{taxHold}</span>
         </div>
       </div>
     </div>

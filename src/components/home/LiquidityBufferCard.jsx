@@ -36,7 +36,7 @@ export const LiquidityBufferCard = ({
           <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">
             LIQUIDITY BUFFER
           </span>
-          <span className="text-xs sm:text-sm font-extrabold text-sky-600 dark:text-sky-400 font-mono">
+          <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white font-mono">
             {safePercent}% Safe
           </span>
         </div>

@@ -127,7 +127,7 @@ export const QuickAddModal = ({
               Amount ({currency})
             </label>
             <div className="flex items-center px-4 py-3 rounded-2xl bg-slate-50 dark:bg-[#0D1117] border border-slate-200 dark:border-slate-800">
-              <span className={`text-xl font-bold font-mono mr-2 ${type === 'income' ? 'text-emerald-500' : 'text-slate-400'}`}>
+              <span className="text-xl font-bold font-mono mr-2 text-slate-900 dark:text-white">
                 {type === 'income' ? '+' : '-'}{currency}
               </span>
               <input

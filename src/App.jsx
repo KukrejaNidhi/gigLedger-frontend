@@ -310,7 +310,7 @@ export default function App() {
                 <div className="space-y-4 animate-fadeIn">
                   <div className="flex items-center justify-between py-1">
                     <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Active Stream Sync</span>
-                    <span className="text-[11px] font-mono font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50">4 Connected</span>
+                    <span className="text-[11px] font-mono font-bold text-slate-900 dark:text-white bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50">4 Connected</span>
                   </div>
 
                   <PlatformSwitcherTabs variant="yellow" />
@@ -347,7 +347,7 @@ export default function App() {
                 <div className="space-y-4 animate-fadeIn">
                   <div className="flex items-center justify-between py-1">
                     <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Profile & Preferences</span>
-                    <span className="text-[11px] font-mono font-bold text-sky-500">Q3 2026</span>
+                    <span className="text-[11px] font-mono font-bold text-slate-900 dark:text-white">Q3 2026</span>
                   </div>
 
                   {/* USER SUMMARY CARD */}
