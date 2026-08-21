@@ -3,6 +3,7 @@ import { ChevronLeft, Plus, Pencil, Trash2, Loader2, Camera } from 'lucide-react
 import { transactionsApi } from '../../services/transactionsApi.js';
 import { categoriesApi } from '../../services/categoriesApi.js';
 import { QuickAddModal } from '../home/QuickAddModal.jsx';
+import { BrandThumbnail } from './BrandThumbnail.jsx';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -176,6 +177,8 @@ export const TransactionsPage = ({
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-3 p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                  <div className="flex items-center gap-3 min-w-0">
+                  <BrandThumbnail transaction={tx} size="sm" />
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                       {tx.rawDescription || (tx.type === 'income' ? 'Income' : 'Expense')}
@@ -187,6 +190,7 @@ export const TransactionsPage = ({
                         {tx.category ? categoriesById[tx.category]?.name || 'Categorized' : 'Uncategorized'}
                       </span>
                     </span>
+                  </div>
                   </div>
 
                   <div className="flex items-center gap-1 flex-shrink-0">

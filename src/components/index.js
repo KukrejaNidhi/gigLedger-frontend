@@ -12,6 +12,7 @@ export * from './deadlines/DeadlinesSection.jsx';
 export * from './deadlines/NotificationsPanel.jsx';
 export * from './transactions/Transactions.jsx';
 export * from './transactions/TransactionsPage.jsx';
+export * from './transactions/BrandThumbnail.jsx';
 export * from './scanner/Scanner.jsx';
 export * from './primitives/Primitives.jsx';
 export * from './auth/index.js';
