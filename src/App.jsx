@@ -45,21 +45,27 @@ import {
   HomeHeader,
   HomePage,
   HomeBottomDock,
-  QuickAddModal,
+  AddTransactionFlow,
+  CategoryPieChart,
 } from './components/index.js';
 import { storage } from './utils/storage.js';
 import { authApi } from './services/authApi.js';
+import { transactionsApi } from './services/transactionsApi.js';
+import { categoriesApi } from './services/categoriesApi.js';
+import { buildCategoryBreakdown } from './utils/categoryBreakdown.js';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(() => storage.getThemePref());
   const [currentUser, setCurrentUser] = useState(() => {
     const session = storage.getAuthSession();
-    return session ? session.user : { name: 'Nidhi Kukreja', email: 'nidhi@gigledgers.app' };
+    return session ? session.user : null;
   });
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'analysis' | 'accounts' | 'more'
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [categoryBreakdown, setCategoryBreakdown] = useState([]);
+  const [categoryBreakdownStatus, setCategoryBreakdownStatus] = useState('idle'); // 'idle' | 'loading' | 'ready' | 'error'
   const [isDiffOpen, setIsDiffOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [toast, setToast] = useState({
@@ -95,6 +101,26 @@ export default function App() {
         });
     }
   }, []);
+
+  // Live category-wise spend breakdown for the Analysis tab pie chart —
+  // fetched once per visit to that tab while authenticated, not re-polled.
+  useEffect(() => {
+    if (activeTab !== 'analysis' || !currentUser || categoryBreakdownStatus !== 'idle') return;
+    setCategoryBreakdownStatus('loading');
+    Promise.all([
+      transactionsApi.listAll({ type: 'expense' }),
+      categoriesApi.list({ type: 'expense' }),
+    ])
+      .then(([transactions, categoriesResult]) => {
+        const breakdown = buildCategoryBreakdown(transactions, categoriesResult?.data || []);
+        setCategoryBreakdown(breakdown);
+        setCategoryBreakdownStatus('ready');
+      })
+      .catch((err) => {
+        console.warn('Category breakdown fetch failed:', err.message);
+        setCategoryBreakdownStatus('error');
+      });
+  }, [activeTab, currentUser, categoryBreakdownStatus]);
 
   const toggleTheme = () => {
     setIsDarkMode(prev => {
@@ -257,13 +283,25 @@ export default function App() {
                   
                   <HatchedBenchmarkBarChart variant="sky" title="Daily Inflow (Last 7 Days)" totalLabel="₹59,500 total" />
 
-                  <MultiPlatformDonutGauge 
+                  <MultiPlatformDonutGauge
                     shares={[
                       { name: 'Uber Driver', amount: '₹33,500', percent: 52, variant: 'sky' },
                       { name: 'Zomato / Delivery', amount: '₹18,900', percent: 29, variant: 'coral' },
                       { name: 'Direct Freelance', amount: '₹11,800', percent: 19, variant: 'olive' },
                     ]}
                   />
+
+                  {categoryBreakdownStatus === 'error' ? (
+                    <div className="text-[11px] font-semibold text-rose-500 bg-rose-500/10 rounded-2xl px-4 py-3">
+                      Couldn't load category breakdown. Pull to refresh or try again shortly.
+                    </div>
+                  ) : (
+                    <CategoryPieChart
+                      title="Spending by Category"
+                      segments={categoryBreakdownStatus === 'ready' ? categoryBreakdown : []}
+                      emptyLabel={categoryBreakdownStatus === 'loading' ? 'Loading…' : 'No data yet'}
+                    />
+                  )}
                 </div>
               )}
 
@@ -409,14 +447,16 @@ export default function App() {
         }} 
       />
 
-      {/* GLOBAL QUICK ADD TRANSACTION MODAL (Triggered by '+' FAB on ANY page) */}
-      <QuickAddModal
+      {/* GLOBAL ADD TRANSACTION FLOW (Triggered by '+' FAB on ANY page): scan-or-manual choice, then review/approve */}
+      <AddTransactionFlow
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
         onAddTransaction={(newTx) => {
+          const isIncome = newTx.type === 'income';
+          const amount = Number(newTx.amount) || 0;
           showToast(
-            newTx.isIncome ? 'Income Recorded' : 'Spending Recorded',
-            `${newTx.title}: ${newTx.isIncome ? '+' : '-'}₹${newTx.amount.toFixed(2)} logged to ledger.`,
+            isIncome ? 'Income Recorded' : 'Spending Recorded',
+            `${newTx.rawDescription || (isIncome ? 'Income' : 'Expense')}: ${isIncome ? '+' : '-'}₹${amount.toFixed(2)} logged to ledger.`,
             'success'
           );
         }}

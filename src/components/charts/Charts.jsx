@@ -299,3 +299,98 @@ export const TaxWaterfallFlow = ({
     </div>
   );
 };
+
+/**
+ * Category-wise spend pie/donut chart. Every slice is direct-labeled in the
+ * legend below (name + amount + percent), so identity never depends on
+ * color alone — the legend also doubles as a table view of the same data.
+ */
+export const CategoryPieChart = ({
+  segments = [],
+  title = 'Spending by Category',
+  totalLabel,
+  emptyLabel = 'No categorized spending yet',
+  size = 148,
+  className = '',
+  ...rest
+}) => {
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  let cumulative = 0;
+
+  const hasData = segments.length > 0;
+
+  return (
+    <div className={`w-full bg-white dark:bg-[#161B22] p-5 rounded-3xl border border-slate-200/80 dark:border-[#30363D] space-y-4 shadow-sm hover:shadow-md transition-all ${className}`} {...rest}>
+      <div className="flex justify-between items-center text-xs font-bold text-slate-900 dark:text-white">
+        <span>{title}</span>
+        {totalLabel && <span className="text-[10px] font-mono text-slate-400">{totalLabel}</span>}
+      </div>
+
+      <div className="flex items-center gap-5">
+        <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100" role="img" aria-label={title}>
+            {!hasData ? (
+              <circle cx="50" cy="50" r={radius} className="stroke-slate-100 dark:stroke-slate-800" strokeWidth="16" fill="none" />
+            ) : (
+              segments.map((seg, idx) => {
+                const v = VARIANT_MAP[seg.variant] || VARIANT_MAP.default;
+                const segLen = (seg.percent / 100) * circumference;
+                // 2px surface gap between adjacent slices
+                const dash = `${Math.max(segLen - 2, 0)} ${circumference - Math.max(segLen - 2, 0)}`;
+                const offset = -cumulative;
+                cumulative += segLen;
+                return (
+                  <circle
+                    key={idx}
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    stroke={v.fill}
+                    strokeWidth="16"
+                    strokeDasharray={dash}
+                    strokeDashoffset={offset}
+                    fill="none"
+                    className="transition-all duration-700 ease-out"
+                  />
+                );
+              })
+            )}
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3">
+            {hasData ? (
+              <>
+                <span className="text-[10px] text-slate-400 font-medium">Top</span>
+                <span className="text-xs font-extrabold text-slate-900 dark:text-white leading-tight">{segments[0].name}</span>
+              </>
+            ) : (
+              <span className="text-[10px] text-slate-400 font-medium">{emptyLabel}</span>
+            )}
+          </div>
+        </div>
+
+        {/* LEGEND — direct labels + table-equivalent list, never color-only */}
+        <div className="flex-1 space-y-2 min-w-0">
+          {hasData ? (
+            segments.map((seg, idx) => {
+              const v = VARIANT_MAP[seg.variant] || VARIANT_MAP.default;
+              return (
+                <div key={idx} className="flex items-center justify-between gap-2 text-[11px]">
+                  <span className="flex items-center gap-1.5 min-w-0 text-slate-600 dark:text-slate-300 truncate">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${v.bg}`}></span>
+                    <span className="truncate">{seg.name}</span>
+                  </span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white flex-shrink-0">
+                    {seg.percent}%
+                  </span>
+                </div>
+              );
+            })
+          ) : (
+            <span className="text-[11px] text-slate-400">Scan or log a few expenses to see this fill in.</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

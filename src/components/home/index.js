@@ -10,5 +10,6 @@ export * from './RecentTransactionsList.jsx';
 export * from './BudgetSectionCard.jsx';
 export * from './ScheduledBillsCard.jsx';
 export * from './QuickAddModal.jsx';
+export * from './AddTransactionFlow.jsx';
 export * from './HomeBottomDock.jsx';
 export * from './HomePage.jsx';

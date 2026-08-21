@@ -1,74 +1,84 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Plus, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { transactionsApi } from '../../services/transactionsApi.js';
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
 
 /**
- * Quick Add Transaction Modal (Triggered by the Floating '+' FAB)
- * Features:
- * - Spending (-) vs Income (+) mode selector
- * - Pre-configured categories (Uber, Zomato, Swiggy, Shell, Starbucks, Apple, Salary, etc.)
- * - Zero emojis, crisp typography, and touch-friendly controls in Rupees (₹)
+ * Quick Add Transaction Modal (Triggered by the '+' FAB, manual entry or as the
+ * review/approve step after an OCR scan).
+ *
+ * Fields match POST /api/transactions exactly (docs/endpoints.json):
+ *   { type: 'income'|'expense', amount, date, rawDescription?, source? }
+ * There is no category or payment-method field on that endpoint, so this form
+ * doesn't collect either.
  */
 export const QuickAddModal = ({
   isOpen,
   onClose,
   onAddTransaction,
   currency = '₹',
+  initialValues = null, // { type, amount, date, rawDescription, source } from OCR
+  title: heading = 'Log Transaction',
+  confirmLabel = 'Save to Ledger',
 }) => {
   const [type, setType] = useState('expense'); // 'income' | 'expense'
-  const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('zomato');
-  const [method, setMethod] = useState('UPI / Card');
+  const [date, setDate] = useState(todayIso());
+  const [rawDescription, setRawDescription] = useState('');
+  const [source, setSource] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setType(initialValues?.type || 'expense');
+    setAmount(initialValues?.amount != null ? String(initialValues.amount) : '');
+    setDate(initialValues?.date || todayIso());
+    setRawDescription(initialValues?.rawDescription || '');
+    setSource(initialValues?.source || '');
+    setError(null);
+  }, [isOpen, initialValues]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) return;
 
-    let defaultTitle = title.trim();
-    if (!defaultTitle) {
-      if (category === 'zomato') defaultTitle = 'Zomato Food Order';
-      else if (category === 'swiggy') defaultTitle = 'Swiggy Instamart';
-      else if (category === 'uber') defaultTitle = type === 'income' ? 'Uber Driving Payout' : 'Uber Ride';
-      else if (category === 'shell') defaultTitle = 'Shell Fuel Refill';
-      else if (category === 'starbucks') defaultTitle = 'Starbucks Coffee';
-      else if (category === 'apple') defaultTitle = 'Apple Services';
-      else defaultTitle = type === 'income' ? 'Salary / Deposit' : 'General Spending';
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const result = await transactionsApi.create({
+        type,
+        amount: numAmount,
+        date,
+        rawDescription: rawDescription.trim() || undefined,
+        source: source.trim() || undefined,
+      });
+
+      if (onAddTransaction) {
+        onAddTransaction(result?.data || { type, amount: numAmount, date, rawDescription, source });
+      }
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Could not save this transaction. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const newTx = {
-      id: `tx-${Date.now()}`,
-      title: defaultTitle,
-      brand: category,
-      icon: category,
-      category: category.charAt(0).toUpperCase() + category.slice(1),
-      method,
-      amount: numAmount,
-      isIncome: type === 'income',
-      date: 'Just now',
-    };
-
-    if (onAddTransaction) {
-      onAddTransaction(newTx);
-    }
-
-    setTitle('');
-    setAmount('');
-    onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      
+
       {/* MODAL CARD */}
       <div className="w-full max-w-md bg-white dark:bg-[#161B22] rounded-t-[32px] sm:rounded-[32px] border border-slate-200/80 dark:border-[#30363D] p-6 shadow-2xl space-y-5 animate-slideUp">
-        
+
         {/* HEADER */}
         <div className="flex items-center justify-between">
           <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
-            Log Transaction
+            {heading}
           </h3>
           <button
             type="button"
@@ -83,10 +93,7 @@ export const QuickAddModal = ({
         <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-[#0D1117]">
           <button
             type="button"
-            onClick={() => {
-              setType('expense');
-              if (category === 'salary') setCategory('zomato');
-            }}
+            onClick={() => setType('expense')}
             className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
               type === 'expense'
                 ? 'bg-white dark:bg-[#161B22] text-rose-600 dark:text-rose-400 shadow-2xs'
@@ -99,10 +106,7 @@ export const QuickAddModal = ({
 
           <button
             type="button"
-            onClick={() => {
-              setType('income');
-              setCategory('uber');
-            }}
+            onClick={() => setType('income')}
             className={`py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
               type === 'income'
                 ? 'bg-white dark:bg-[#161B22] text-emerald-600 dark:text-emerald-400 shadow-2xs'
@@ -116,7 +120,7 @@ export const QuickAddModal = ({
 
         {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          
+
           {/* AMOUNT INPUT */}
           <div className="space-y-1">
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
@@ -139,74 +143,64 @@ export const QuickAddModal = ({
             </div>
           </div>
 
-          {/* TITLE INPUT */}
+          {/* DATE INPUT */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              Date
+            </label>
+            <input
+              type="date"
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-[#0D1117] border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none"
+            />
+          </div>
+
+          {/* DESCRIPTION INPUT */}
           <div className="space-y-1">
             <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
               Description (Optional)
             </label>
             <input
               type="text"
-              placeholder={type === 'income' ? 'e.g. Uber Payout, Client Retainer' : 'e.g. Zomato Dinner, Shell Petrol, Starbucks'}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              placeholder={type === 'income' ? 'e.g. Uber Payout, Client Retainer' : 'e.g. Zomato Dinner, Shell Petrol'}
+              value={rawDescription}
+              onChange={(e) => setRawDescription(e.target.value)}
               className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-[#0D1117] border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none"
             />
           </div>
 
-          {/* BRAND / CATEGORY & METHOD */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* SOURCE (income only) */}
+          {type === 'income' && (
             <div className="space-y-1">
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Merchant / Platform
+                Source (Optional)
               </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0D1117] border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none"
-              >
-                {type === 'income' ? (
-                  <>
-                    <option value="uber">Uber Driver</option>
-                    <option value="salary">Direct Deposit / Salary</option>
-                    <option value="freelance">Client Invoice</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="zomato">Zomato</option>
-                    <option value="swiggy">Swiggy</option>
-                    <option value="uber">Uber Ride</option>
-                    <option value="shell">Shell Fuel</option>
-                    <option value="starbucks">Starbucks Coffee</option>
-                    <option value="apple">Apple Services</option>
-                  </>
-                )}
-              </select>
+              <input
+                type="text"
+                placeholder="e.g. uber, salary, freelance"
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-[#0D1117] border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-medium text-slate-900 dark:text-white outline-none"
+              />
             </div>
+          )}
 
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Payment Method
-              </label>
-              <select
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-[#0D1117] border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none"
-              >
-                <option value="UPI / Card">UPI / Card</option>
-                <option value="Cash">Cash</option>
-                <option value="Bank Payout">Bank Payout</option>
-                <option value="Credit Card">Credit Card</option>
-              </select>
+          {error && (
+            <div className="text-xs font-semibold text-rose-500 bg-rose-500/10 rounded-xl px-3 py-2">
+              {error}
             </div>
-          </div>
+          )}
 
           {/* SUBMIT BUTTON */}
           <button
             type="submit"
-            className="w-full py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-sky-500/25 transition active:scale-98 flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className="w-full py-4 rounded-2xl bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-sky-500/25 transition active:scale-98 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            <span>Save to Ledger</span>
+            <span>{isSubmitting ? 'Saving…' : confirmLabel}</span>
           </button>
 
         </form>
